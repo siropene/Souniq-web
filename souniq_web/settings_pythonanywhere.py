@@ -56,16 +56,11 @@ if not DEBUG:
 # ELIMINAR CONFIGURACIONES DE CELERY
 # Ya no necesitamos Celery para la versión síncrona
 
-# Logging
+# Logging - Simplificado para PythonAnywhere
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),
-        },
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
@@ -73,12 +68,12 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['console'] if DEBUG else ['file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
         },
         'music_processing': {
-            'handlers': ['console'] if DEBUG else ['file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
         },
