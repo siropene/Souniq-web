@@ -8,3 +8,12 @@ mysqlclient==2.2.0
 python-decouple==3.8
 requests==2.31.0
 gradio-client==1.3.0
+
+# Form handling (necesario para crispy_forms)
+django-crispy-forms==2.0
+crispy-bootstrap5==0.7
+django-widget-tweaks==1.5.0
+
+# File and data handling
+django-cleanup==8.1.0
+numpy==1.24.3
