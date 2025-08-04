@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+
+{% block title %}Registro de Actividad - SouniQ{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Registro de Actividad
+                    </h4>
+                    <p class="mb-0 mt-2 opacity-75">
+                        Historial de accesos y actividad en tu cuenta
+                    </p>
+                </div>
+                <div class="card-body">
+                    {% if login_attempts %}
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-chart-line me-2"></i>
+                                            Resumen de Actividad
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <div class="text-center">
+                                                    <h4 class="text-success">{{ login_attempts|length }}</h4>
+                                                    <small class="text-muted">Intentos Totales</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="text-center">
+                                                    <h4 class="text-info">
+                                                        {% comment %}Se calcula en la vista{% endcomment %}
+                                                        {{ successful_logins_count|default:0 }}
+                                                    </h4>
+                                                    <small class="text-muted">Exitosos</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-clock me-2"></i>
+                                            Último Acceso
+                                        </h6>
+                                        {% with last_login=login_attempts.0 %}
+                                            {% if last_login %}
+                                                <p class="mb-1">
+                                                    <strong>{{ last_login.attempted_at|date:"d/m/Y H:i" }}</strong>
+                                                </p>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                                    IP: {{ last_login.ip_address }}
+                                                </small>
+                                            {% else %}
+                                                <p class="text-muted">No hay registros</p>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>
+                                            <i class="fas fa-calendar-alt me-2"></i>
+                                            Fecha y Hora
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            Estado
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-globe me-2"></i>
+                                            Dirección IP
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-desktop me-2"></i>
+                                            Navegador/Dispositivo
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for attempt in login_attempts %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex flex-column">
+                                                    <span class="fw-bold">{{ attempt.attempted_at|date:"d/m/Y" }}</span>
+                                                    <small class="text-muted">{{ attempt.attempted_at|time:"H:i:s" }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if attempt.success %}
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check me-1"></i>
+                                                        Exitoso
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-times me-1"></i>
+                                                        Fallido
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <code class="bg-light px-2 py-1 rounded">{{ attempt.ip_address }}</code>
+                                            </td>
+                                            <td>
+                                                <div class="user-agent-info">
+                                                    {% if attempt.user_agent %}
+                                                        <small class="text-muted" title="{{ attempt.user_agent }}">
+                                                            {% if "Chrome" in attempt.user_agent %}
+                                                                <i class="fab fa-chrome text-warning me-1"></i>Chrome
+                                                            {% elif "Firefox" in attempt.user_agent %}
+                                                                <i class="fab fa-firefox-browser text-danger me-1"></i>Firefox
+                                                            {% elif "Safari" in attempt.user_agent %}
+                                                                <i class="fab fa-safari text-info me-1"></i>Safari
+                                                            {% elif "Edge" in attempt.user_agent %}
+                                                                <i class="fab fa-edge text-primary me-1"></i>Edge
+                                                            {% else %}
+                                                                <i class="fas fa-globe me-1"></i>Desconocido
+                                                            {% endif %}
+                                                            
+                                                            {% if "Mobile" in attempt.user_agent or "Android" in attempt.user_agent or "iPhone" in attempt.user_agent %}
+                                                                <i class="fas fa-mobile-alt ms-2 text-secondary"></i>
+                                                            {% else %}
+                                                                <i class="fas fa-desktop ms-2 text-secondary"></i>
+                                                            {% endif %}
+                                                        </small>
+                                                    {% else %}
+                                                        <small class="text-muted">No disponible</small>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Paginación -->
+                        {% if login_attempts.has_other_pages %}
+                            <nav aria-label="Paginación del registro de actividad">
+                                <ul class="pagination justify-content-center">
+                                    {% if login_attempts.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=1">
+                                                <i class="fas fa-angle-double-left"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ login_attempts.previous_page_number }}">
+                                                <i class="fas fa-angle-left"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for num in login_attempts.paginator.page_range %}
+                                        {% if login_attempts.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > login_attempts.number|add:'-3' and num < login_attempts.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if login_attempts.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ login_attempts.next_page_number }}">
+                                                <i class="fas fa-angle-right"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ login_attempts.paginator.num_pages }}">
+                                                <i class="fas fa-angle-double-right"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No hay actividad registrada</h5>
+                            <p class="text-muted">
+                                Aún no tienes registros de actividad en tu cuenta.
+                            </p>
+                        </div>
+                    {% endif %}
+
+                    <hr class="my-4">
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="alert alert-info" role="alert">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Información sobre el registro de actividad:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>Se registran todos los intentos de acceso a tu cuenta</li>
+                                    <li>Los registros incluyen fecha, hora, IP y navegador utilizado</li>
+                                    <li>Los registros se mantienen durante 90 días por motivos de seguridad</li>
+                                    <li>Si detectas actividad sospechosa, cambia tu contraseña inmediatamente</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-shield-alt me-2"></i>
+                                        Seguridad
+                                    </h6>
+                                    <p class="small text-muted">
+                                        Si ves actividad que no reconoces, 
+                                        protege tu cuenta inmediatamente:
+                                    </p>
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'accounts:change_password' %}" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-key me-2"></i>
+                                            Cambiar Contraseña
+                                        </a>
+                                        <a href="mailto:security@souniq.com" class="btn btn-outline-danger btn-sm">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            Reportar Actividad Sospechosa
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Volver al Perfil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tooltip para user agents largos
+    const userAgentElements = document.querySelectorAll('[title]');
+    userAgentElements.forEach(element => {
+        if (element.title.length > 50) {
+            element.title = element.title.substring(0, 50) + '...';
+        }
+    });
+    
+    // Resaltar accesos fallidos
+    const failedAttempts = document.querySelectorAll('.badge.bg-danger');
+    failedAttempts.forEach(badge => {
+        const row = badge.closest('tr');
+        if (row) {
+            row.classList.add('table-warning');
+        }
+    });
+    
+    // Auto-refresh cada 30 segundos si hay actividad reciente
+    const lastActivityTime = document.querySelector('tbody tr:first-child');
+    if (lastActivityTime) {
+        const lastTime = new Date(lastActivityTime.querySelector('td:first-child span').textContent);
+        const now = new Date();
+        const diffMinutes = (now - lastTime) / (1000 * 60);
+        
+        // Si la última actividad fue hace menos de 5 minutos, hacer auto-refresh
+        if (diffMinutes < 5) {
+            setTimeout(function() {
+                window.location.reload();
+            }, 30000);
+        }
+    }
+});
+</script>
+{% endblock %}

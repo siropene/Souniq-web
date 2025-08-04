@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Conversión a MIDI - SouniQ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2 text-primary">
+            <i class="fas fa-file-audio me-2"></i>Conversión a MIDI
+        </h1>
+        <p class="text-muted">Convierte tus stems de audio a archivos MIDI usando IA</p>
+    </div>
+</div>
+
+<!-- Songs with Stems -->
+{% if songs_with_stems %}
+<div class="row">
+    {% for song, stems in songs_with_stems.items %}
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0 text-white">
+                            <i class="fas fa-music me-2"></i>{{ song.title }}
+                        </h5>
+                        <small class="text-white-50">
+                            <i class="fas fa-layer-group me-1"></i>{{ stems|length }} stems disponibles
+                        </small>
+                    </div>
+                    <div class="col-auto">
+                        <span class="badge status-badge status-{{ song.status }}">
+                            {{ song.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <!-- Stems Grid -->
+                <div class="row">
+                    {% for stem in stems %}
+                    <div class="col-lg-6 col-xl-4 mb-3">
+                        <div class="stem-card bg-light p-3 rounded h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0 text-primary">
+                                    <i class="fas fa-music me-1"></i>{{ stem.get_stem_type_display }}
+                                </h6>
+                                <small class="text-muted">#{{ stem.order }}</small>
+                            </div>
+                            
+                            <!-- Audio Player -->
+                            {% if stem.file %}
+                            <div class="audio-player mb-3">
+                                <audio controls preload="metadata" class="w-100">
+                                    <source src="{{ stem.file.url }}" type="audio/mpeg">
+                                    Tu navegador no soporta el elemento de audio.
+                                </audio>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- MIDI Status and Actions -->
+                            {% if stem.midi_file %}
+                                {% if stem.midi_file.status == 'completed' %}
+                                <div class="alert alert-success py-2 mb-2">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    <strong>MIDI Disponible</strong>
+                                </div>
+                                
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a href="{% url 'music_processing:download_file' 'stem' stem.id %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download me-1"></i>Stem
+                                    </a>
+                                    <a href="{% url 'music_processing:download_file' 'midi' stem.midi_file.id %}" 
+                                       class="btn btn-sm btn-primary">
+                                        <i class="fas fa-file-audio me-1"></i>MIDI
+                                    </a>
+                                </div>
+                                
+                                {% elif stem.midi_file.status == 'processing' %}
+                                <div class="alert alert-warning py-2 mb-2">
+                                    <i class="fas fa-spinner fa-spin me-1"></i>
+                                    <strong>Procesando...</strong>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'music_processing:download_file' 'stem' stem.id %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download me-1"></i>Stem
+                                    </a>
+                                    <button class="btn btn-sm btn-warning" disabled>
+                                        <i class="fas fa-clock me-1"></i>Esperando...
+                                    </button>
+                                </div>
+                                
+                                {% elif stem.midi_file.status == 'error' %}
+                                <div class="alert alert-danger py-2 mb-2">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    <strong>Error al procesar</strong>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'music_processing:download_file' 'stem' stem.id %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download me-1"></i>Stem
+                                    </a>
+                                    <form method="post" action="{% url 'music_processing:convert_to_midi' stem.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-redo me-1"></i>Reintentar
+                                        </button>
+                                    </form>
+                                </div>
+                                
+                                {% else %}
+                                <div class="alert alert-info py-2 mb-2">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <strong>Pendiente</strong>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'music_processing:download_file' 'stem' stem.id %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download me-1"></i>Stem
+                                    </a>
+                                    <form method="post" action="{% url 'music_processing:convert_to_midi' stem.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="fas fa-play me-1"></i>Iniciar
+                                        </button>
+                                    </form>
+                                </div>
+                                {% endif %}
+                            {% else %}
+                            <div class="alert alert-secondary py-2 mb-2">
+                                <i class="fas fa-file-audio me-1"></i>
+                                <strong>Sin MIDI</strong>
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'music_processing:download_file' 'stem' stem.id %}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download me-1"></i>Stem
+                                </a>
+                                <form method="post" action="{% url 'music_processing:convert_to_midi' stem.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success convert-btn" data-stem-id="{{ stem.id }}">
+                                        <i class="fas fa-magic me-1"></i>Convertir a MIDI
+                                    </button>
+                                </form>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Bulk Actions -->
+                <div class="row mt-3">
+                    <div class="col">
+                        <hr>
+                        <h6 class="text-secondary">
+                            <i class="fas fa-tasks me-2"></i>Acciones por Lotes
+                        </h6>
+                        
+                        <div class="d-flex gap-2 flex-wrap">
+                            {% if stems %}
+                            <form method="post" class="d-inline" id="convert-all-form-{{ song.id }}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="convert_all">
+                                <input type="hidden" name="song_id" value="{{ song.id }}">
+                                <button type="button" class="btn btn-sm btn-outline-success" 
+                                        onclick="convertAllStems({{ song.id }})">
+                                    <i class="fas fa-magic me-1"></i>Convertir Todos los Stems
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-file-audio text-muted" style="font-size: 4rem;"></i>
+    <h3 class="mt-3 text-muted">No tienes stems disponibles</h3>
+    <p class="text-muted">Primero necesitas generar stems de tus canciones</p>
+    <a href="{% url 'music_processing:stems' %}" class="btn btn-primary btn-lg">
+        <i class="fas fa-layer-group me-2"></i>Ir a Generación de Stems
+    </a>
+</div>
+{% endif %}
+
+<!-- Info Modal -->
+<div class="modal fade" id="infoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>Información sobre Conversión a MIDI
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>¿Qué es la conversión a MIDI?</strong></p>
+                <p>La conversión a MIDI transforma tus stems de audio en archivos MIDI que contienen información musical estructurada (notas, ritmos, etc.) que puede ser utilizada para generar nuevas canciones.</p>
+                
+                <p><strong>¿Cuánto tiempo tarda?</strong></p>
+                <p>El proceso de conversión puede tardar entre 2-10 minutos dependiendo de la duración y complejidad del stem.</p>
+                
+                <p><strong>¿Qué stems funcionan mejor?</strong></p>
+                <ul class="small">
+                    <li><strong>Piano:</strong> Excelentes resultados</li>
+                    <li><strong>Guitarra:</strong> Buenos resultados</li>
+                    <li><strong>Bajo:</strong> Buenos resultados</li>
+                    <li><strong>Voces:</strong> Resultados variables</li>
+                    <li><strong>Batería:</strong> Limitados (principalmente ritmo)</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Button -->
+<div class="position-fixed bottom-0 end-0 p-3">
+    <button class="btn btn-primary btn-sm rounded-circle" data-bs-toggle="modal" data-bs-target="#infoModal">
+        <i class="fas fa-question"></i>
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.stem-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.stem-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.status-badge {
+    font-size: 0.75rem;
+}
+
+.status-uploaded { background-color: #6c757d; }
+.status-processing_stems { background-color: #ffc107; color: #000; }
+.status-stems_completed { background-color: #198754; }
+.status-error { background-color: #dc3545; }
+
+.audio-player audio {
+    height: 40px;
+}
+
+.alert {
+    font-size: 0.85rem;
+}
+
+.btn-sm {
+    font-size: 0.8rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Inicializar sistema de overlay de procesamiento
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('MIDI conversion page DOM loaded');
+    
+    // Auto-refresh para tareas en progreso
+    const processingElements = document.querySelectorAll('.alert-warning');
+    console.log('Processing elements found:', processingElements.length);
+    
+    if (processingElements.length > 0) {
+        // Refrescar cada 15 segundos si hay conversiones en progreso
+        setTimeout(function() {
+            window.location.reload();
+        }, 15000);
+    }
+    
+    // Configurar todos los formularios de conversión individual
+    // En lugar de buscar por formularios, buscar por botones de conversión
+    const convertButtons = document.querySelectorAll('button[data-stem-id], button.convert-btn, button:has(.fa-magic)');
+    console.log('Convert buttons found:', convertButtons.length);
+    
+    convertButtons.forEach(function(button, index) {
+        const form = button.closest('form');
+        if (form) {
+            console.log('Adding event listener to convert button', index, 'with stem ID:', button.dataset.stemId);
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                console.log('MIDI conversion form submitted via button!', e);
+                
+                const stemId = button.dataset.stemId || button.getAttribute('data-stem-id') || 'unknown';
+                
+                console.log('Converting stem:', stemId);
+                console.log('showMidiProcessing function exists:', typeof showMidiProcessing !== 'undefined');
+                
+                // Mostrar overlay de conversión MIDI
+                if (typeof showMidiProcessing !== 'undefined') {
+                    showMidiProcessing(stemId);
+                    console.log('MIDI overlay shown');
+                } else {
+                    console.error('showMidiProcessing function not found');
+                    alert('Error: función de overlay MIDI no encontrada');
+                }
+                
+                // Enviar formulario después de mostrar el overlay
+                setTimeout(() => {
+                    console.log('Submitting form after overlay');
+                    // Restaurar el comportamiento normal del formulario
+                    form.removeEventListener('submit', arguments.callee);
+                    form.submit();
+                }, 500);
+            });
+        }
+    });
+    
+    // También mantener el selector original como fallback
+    const midiConversionForms = document.querySelectorAll('form[action*="convert_to_midi"]');
+    console.log('Found MIDI conversion forms via action selector:', midiConversionForms.length);
+    
+    midiConversionForms.forEach(function(form, index) {
+        // Solo agregar listener si no se agregó ya por el botón
+        const button = form.querySelector('button[data-stem-id], button.convert-btn');
+        if (button && !button.hasAttribute('data-listener-added')) {
+            button.setAttribute('data-listener-added', 'true');
+            console.log('Adding fallback event listener to MIDI form', index);
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                console.log('MIDI conversion form submitted via fallback!', e);
+                
+                const stemId = button.dataset.stemId || button.getAttribute('data-stem-id') || 'unknown';
+                
+                console.log('Converting stem:', stemId);
+                
+                // Mostrar overlay de conversión MIDI
+                if (typeof showMidiProcessing !== 'undefined') {
+                    showMidiProcessing(stemId);
+                    console.log('MIDI overlay shown via fallback');
+                } else {
+                    console.error('showMidiProcessing function not found');
+                    alert('Error: función de overlay MIDI no encontrada');
+                }
+                
+                // Enviar formulario después de mostrar el overlay
+                setTimeout(() => {
+                    console.log('Submitting form after overlay via fallback');
+                    form.submit();
+                }, 500);
+            });
+        }
+    });
+});
+
+// Función específica para mostrar procesamiento de conversión MIDI
+function showMidiProcessing(stemId) {
+    if (typeof processingOverlay !== 'undefined') {
+        processingOverlay.show({
+            title: 'Convertiendo Stem a MIDI',
+            message: `Procesando stem ${stemId}... Esto puede tardar varios minutos.`,
+            icon: 'fas fa-file-audio fa-spin fa-3x text-warning'
+        });
+        
+        processingOverlay.setStatus('Analizando audio y extrayendo características musicales...');
+        
+        // Simular progreso específico para MIDI
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 15;
+            if (progress >= 95) {
+                progress = 95;
+                clearInterval(interval);
+            }
+            
+            processingOverlay.setProgress(progress);
+            
+            // Actualizar mensaje de progreso
+            if (progress < 30) {
+                processingOverlay.setStatus('Analizando características del audio...');
+            } else if (progress < 60) {
+                processingOverlay.setStatus('Extrayendo notas y ritmos...');
+            } else if (progress < 90) {
+                processingOverlay.setStatus('Generando archivo MIDI...');
+            } else {
+                processingOverlay.setStatus('Finalizando conversión...');
+            }
+        }, 2000 + Math.random() * 1000);
+    }
+}
+
+// Convertir todos los stems de una canción
+function convertAllStems(songId) {
+    if (confirm('¿Estás seguro de que quieres convertir todos los stems de esta canción a MIDI? Esto puede tardar varios minutos.')) {
+        // Mostrar overlay para conversión masiva
+        if (typeof processingOverlay !== 'undefined') {
+            processingOverlay.show({
+                title: 'Conversión Masiva a MIDI',
+                message: 'Preparando conversión de todos los stems...',
+                icon: 'fas fa-file-audio fa-spin fa-3x text-warning'
+            });
+            
+            processingOverlay.setStatus('Esta funcionalidad estará disponible próximamente.');
+            
+            // Simular progreso y mostrar mensaje
+            setTimeout(() => {
+                processingOverlay.setProgress(100);
+                processingOverlay.setStatus('Funcionalidad en desarrollo...');
+                
+                setTimeout(() => {
+                    processingOverlay.hide();
+                    alert('Funcionalidad de conversión por lotes será implementada próximamente. Por favor, convierte los stems individualmente.');
+                }, 2000);
+            }, 1000);
+        } else {
+            alert('Funcionalidad de conversión por lotes será implementada próximamente. Por favor, convierte los stems individualmente.');
+        }
+    }
+}
+
+// Función de conveniencia para iniciar conversión desde botones específicos
+function startMidiConversion(stemId, formElement) {
+    showMidiProcessing(stemId);
+    
+    setTimeout(() => {
+        formElement.submit();
+    }, 500);
+}
+</script>
+{% endblock %}

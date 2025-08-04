@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirmar Eliminación - SouniQ{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+            </div>
+            
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>¡Atención!</strong> Esta acción no se puede deshacer.
+                </div>
+                
+                <p>¿Estás seguro de que deseas eliminar el siguiente track generado?</p>
+                
+                <div class="bg-light p-3 rounded mb-3">
+                    <h6 class="text-primary mb-2">
+                        <i class="fas fa-compact-disc me-2"></i>{{ track.title }}
+                    </h6>
+                    <ul class="list-unstyled small text-muted mb-0">
+                        <li><strong>Basado en:</strong> {{ track.midi_file.stem.song.title }}</li>
+                        <li><strong>Stem:</strong> {{ track.midi_file.stem.get_stem_type_display }}</li>
+                        <li><strong>Creado:</strong> {{ track.created_at|date:"d M Y H:i" }}</li>
+                        {% if track.completed_at %}<li><strong>Completado:</strong> {{ track.completed_at|date:"d M Y H:i" }}</li>{% endif %}
+                        <li><strong>Estado:</strong> 
+                            <span class="badge status-badge status-{{ track.status }}">
+                                {% if track.status == 'completed' %}Completado
+                                {% elif track.status == 'processing' %}Procesando
+                                {% elif track.status == 'error' %}Error
+                                {% else %}Pendiente{% endif %}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+                
+                {% if track.status == 'completed' and track.generated_file %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Se eliminará también el archivo de audio generado.
+                </div>
+                {% endif %}
+                
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="{% url 'music_processing:track_generation' %}" class="btn btn-secondary">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </a>
+                    
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>Eliminar Track
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.status-badge {
+    font-size: 0.75rem;
+}
+
+.status-completed { background-color: #198754; }
+.status-processing { background-color: #ffc107; color: #000; }
+.status-error { background-color: #dc3545; }
+.status-pending { background-color: #6c757d; }
+</style>
+{% endblock %}

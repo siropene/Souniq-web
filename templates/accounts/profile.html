@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Mi Perfil - SouniQ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2 text-primary">
+            <i class="fas fa-user me-2"></i>Mi Perfil
+        </h1>
+        <p class="text-muted">Gestiona tu información personal y configuraciones</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Información del Perfil -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                {% if profile.avatar %}
+                    <img src="{{ profile.avatar.url }}" alt="Avatar" 
+                         class="rounded-circle mb-3" width="120" height="120" 
+                         style="object-fit: cover;">
+                {% else %}
+                    <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                         style="width: 120px; height: 120px;">
+                        <i class="fas fa-user text-white fa-3x"></i>
+                    </div>
+                {% endif %}
+                
+                <h4 class="text-primary">{{ profile.get_full_name }}</h4>
+                <p class="text-muted">@{{ user.username }}</p>
+                
+                {% if profile.bio %}
+                <p class="small">{{ profile.bio }}</p>
+                {% endif %}
+                
+                <div class="text-start mt-4">
+                    <div class="mb-2">
+                        <i class="fas fa-envelope text-muted me-2"></i>
+                        <span class="small">{{ user.email }}</span>
+                    </div>
+                    {% if profile.phone_number %}
+                    <div class="mb-2">
+                        <i class="fas fa-phone text-muted me-2"></i>
+                        <span class="small">{{ profile.phone_number }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="mb-2">
+                        <i class="fas fa-calendar text-muted me-2"></i>
+                        <span class="small">Miembro desde {{ user.date_joined|date:"M Y" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Estadísticas del Usuario -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Mis Estadísticas</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <h4 class="text-primary mb-0">{{ user_stats.songs_uploaded }}</h4>
+                        <small class="text-muted">Canciones</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h4 class="text-success mb-0">{{ user_stats.stems_generated }}</h4>
+                        <small class="text-muted">Stems</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-warning mb-0">{{ user_stats.midi_files }}</h4>
+                        <small class="text-muted">MIDIs</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-info mb-0">{{ user_stats.tracks_generated }}</h4>
+                        <small class="text-muted">Generados</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Enlaces Rápidos -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="card-title">Acciones</h6>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'accounts:change_password' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                    </a>
+                    <a href="{% url 'accounts:activity_log' %}" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-history me-2"></i>Ver Actividad
+                    </a>
+                    <a href="{% url 'accounts:delete_account' %}" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-user-times me-2"></i>Eliminar Cuenta
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Edición -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Editar Perfil</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label">Nombre</label>
+                            {{ form.first_name.as_widget }}
+                            {% if form.first_name.errors %}
+                                <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label">Apellidos</label>
+                            {{ form.last_name.as_widget }}
+                            {% if form.last_name.errors %}
+                                <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">Correo electrónico</label>
+                        {{ form.email.as_widget }}
+                        {% if form.email.errors %}
+                            <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">Teléfono</label>
+                            {{ form.phone_number.as_widget }}
+                            {% if form.phone_number.errors %}
+                                <div class="text-danger small mt-1">{{ form.phone_number.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.birth_date.id_for_label }}" class="form-label">Fecha de nacimiento</label>
+                            {{ form.birth_date.as_widget }}
+                            {% if form.birth_date.errors %}
+                                <div class="text-danger small mt-1">{{ form.birth_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.bio.id_for_label }}" class="form-label">Biografía</label>
+                        {{ form.bio.as_widget }}
+                        {% if form.bio.errors %}
+                            <div class="text-danger small mt-1">{{ form.bio.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">Cuéntanos algo sobre ti (máximo 500 caracteres)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.avatar.id_for_label }}" class="form-label">Foto de perfil</label>
+                        {{ form.avatar.as_widget }}
+                        {% if form.avatar.errors %}
+                            <div class="text-danger small mt-1">{{ form.avatar.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">Formatos soportados: JPG, PNG (máx. 5MB)</div>
+                    </div>
+
+                    <hr>
+
+                    <h6 class="text-primary mb-3">Configuración de Notificaciones</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.email_notifications.as_widget }}
+                                <label class="form-check-label" for="{{ form.email_notifications.id_for_label }}">
+                                    {{ form.email_notifications.label }}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.processing_notifications.as_widget }}
+                                <label class="form-check-label" for="{{ form.processing_notifications.id_for_label }}">
+                                    {{ form.processing_notifications.label }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Guardar Cambios
+                        </button>
+                        <a href="{% url 'core:dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actividad Reciente -->
+{% if recent_logins %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-history me-2"></i>Actividad Reciente</h6>
+                <a href="{% url 'accounts:activity_log' %}" class="btn btn-sm btn-outline-primary">Ver Todo</a>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for login in recent_logins %}
+                    <div class="list-group-item border-0 px-0 d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-sign-in-alt text-success me-2"></i>
+                            <span class="small">Inicio de sesión desde {{ login.ip_address }}</span>
+                        </div>
+                        <small class="text-muted">{{ login.attempted_at|timesince }} ago</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Preview avatar before upload
+document.getElementById('{{ form.avatar.id_for_label }}').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const avatar = document.querySelector('.rounded-circle');
+            if (avatar) {
+                avatar.src = e.target.result;
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Bio character counter
+const bioField = document.getElementById('{{ form.bio.id_for_label }}');
+const maxLength = 500;
+
+bioField.addEventListener('input', function() {
+    const remaining = maxLength - this.value.length;
+    const helpText = this.parentNode.querySelector('.form-text');
+    
+    if (remaining < 50) {
+        helpText.className = 'form-text text-warning';
+        helpText.textContent = `${remaining} caracteres restantes`;
+    } else {
+        helpText.className = 'form-text';
+        helpText.textContent = 'Cuéntanos algo sobre ti (máximo 500 caracteres)';
+    }
+});
+</script>
+{% endblock %}

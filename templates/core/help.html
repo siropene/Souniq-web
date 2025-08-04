@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}Centro de Ayuda - SouniQ{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+    <div class="col">
+        <h1 class="h2 text-primary">Centro de Ayuda</h1>
+        <p class="lead text-muted">Encuentra respuestas a las preguntas más frecuentes</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <h3 class="text-primary mb-4">Preguntas Frecuentes</h3>
+        
+        <div class="accordion" id="faqAccordion">
+            {% for faq in faqs %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                    <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" 
+                            type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#collapse{{ forloop.counter }}" 
+                            aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" 
+                            aria-controls="collapse{{ forloop.counter }}">
+                        {{ faq.question }}
+                    </button>
+                </h2>
+                <div id="collapse{{ forloop.counter }}" 
+                     class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" 
+                     aria-labelledby="heading{{ forloop.counter }}" 
+                     data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        {{ faq.answer }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="mt-5">
+            <h3 class="text-primary mb-4">Guías de Uso</h3>
+            
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <i class="fas fa-upload text-primary fa-2x mb-3"></i>
+                            <h5 class="card-title">Cómo Subir Canciones</h5>
+                            <p class="card-text">
+                                Aprende a subir tus archivos de audio de forma correcta y optimizada.
+                            </p>
+                            <ol class="small">
+                                <li>Haz clic en "Subir Canción"</li>
+                                <li>Introduce un título descriptivo</li>
+                                <li>Selecciona o arrastra tu archivo</li>
+                                <li>Haz clic en "Subir"</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <i class="fas fa-layer-group text-success fa-2x mb-3"></i>
+                            <h5 class="card-title">Generar Stems</h5>
+                            <p class="card-text">
+                                Proceso paso a paso para separar tu música en stems individuales.
+                            </p>
+                            <ol class="small">
+                                <li>Ve a la sección "Stems"</li>
+                                <li>Selecciona una canción subida</li>
+                                <li>Haz clic en "Generar Stems"</li>
+                                <li>Espera a que termine el procesamiento</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <i class="fas fa-file-audio text-warning fa-2x mb-3"></i>
+                            <h5 class="card-title">Conversión a MIDI</h5>
+                            <p class="card-text">
+                                Convierte tus stems a archivos MIDI editables.
+                            </p>
+                            <ol class="small">
+                                <li>Ve a la sección "MIDI"</li>
+                                <li>Selecciona los stems deseados</li>
+                                <li>Haz clic en "Convertir a MIDI"</li>
+                                <li>Descarga los archivos generados</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <i class="fas fa-magic text-info fa-2x mb-3"></i>
+                            <h5 class="card-title">Generar Nuevas Canciones</h5>
+                            <p class="card-text">
+                                Crea composiciones originales basadas en tus MIDIs.
+                            </p>
+                            <ol class="small">
+                                <li>Ve a "Generar Tracks"</li>
+                                <li>Selecciona un archivo MIDI</li>
+                                <li>Configura los parámetros</li>
+                                <li>Inicia la generación</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-headset me-2"></i>¿Necesitas más ayuda?
+                </h5>
+                <p class="card-text">
+                    Si no encuentras la respuesta que buscas, nuestro equipo de soporte está aquí para ayudarte.
+                </p>
+                <a href="mailto:soporte@souniq.com" class="btn btn-light">
+                    <i class="fas fa-envelope me-2"></i>Contactar Soporte
+                </a>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-book me-2"></i>Recursos Útiles
+                </h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <a href="{% url 'core:terms' %}" class="text-decoration-none">
+                            <i class="fas fa-file-contract me-2"></i>Términos de Servicio
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{% url 'core:privacy' %}" class="text-decoration-none">
+                            <i class="fas fa-shield-alt me-2"></i>Política de Privacidad
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{% url 'core:about' %}" class="text-decoration-none">
+                            <i class="fas fa-info-circle me-2"></i>Acerca de SouniQ
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mt-4 bg-light">
+            <div class="card-body">
+                <h6 class="card-title">💡 Consejo</h6>
+                <p class="card-text small">
+                    Para obtener mejores resultados, usa archivos de audio de alta calidad 
+                    y asegúrate de que no tengan ruido de fondo excesivo.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

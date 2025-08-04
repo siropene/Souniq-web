@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Acerca de - SouniQ{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+    <div class="col">
+        <h1 class="h2 text-primary">Acerca de SouniQ</h1>
+        <p class="lead text-muted">La revolución del procesamiento musical con inteligencia artificial</p>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-lg-8">
+        <h3 class="text-primary mb-3">Nuestra Misión</h3>
+        <p class="lead">
+            En SouniQ, creemos que la música es el lenguaje universal que conecta a las personas. 
+            Nuestra misión es democratizar el acceso a herramientas profesionales de procesamiento musical 
+            mediante el poder de la inteligencia artificial.
+        </p>
+        
+        <h3 class="text-primary mb-3 mt-5">¿Qué Hacemos?</h3>
+        <p>
+            SouniQ es una plataforma innovadora que utiliza algoritmos de machine learning de última generación 
+            para transformar la forma en que trabajas con música. Ofrecemos tres funcionalidades principales:
+        </p>
+        
+        <div class="row g-4 my-4">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <i class="fas fa-layer-group text-primary fa-3x mb-3"></i>
+                    <h5>Separación de Stems</h5>
+                    <p class="small text-muted">
+                        Divide cualquier canción en sus elementos individuales con precisión profesional.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <i class="fas fa-file-audio text-primary fa-3x mb-3"></i>
+                    <h5>Conversión MIDI</h5>
+                    <p class="small text-muted">
+                        Convierte audio a MIDI para editar y manipular en cualquier DAW.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <i class="fas fa-magic text-primary fa-3x mb-3"></i>
+                    <h5>Generación Musical</h5>
+                    <p class="small text-muted">
+                        Crea nuevas composiciones basadas en tus archivos MIDI existentes.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <h3 class="text-primary mb-3 mt-5">Tecnología</h3>
+        <p>
+            Utilizamos modelos de inteligencia artificial entrenados con millones de canciones y 
+            alojados en Hugging Face. Esto nos permite ofrecer resultados de calidad profesional 
+            en tiempos de procesamiento optimizados.
+        </p>
+        
+        <h3 class="text-primary mb-3 mt-5">Para Quién</h3>
+        <ul class="list-unstyled">
+            <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Productores musicales</strong> que necesitan separar elementos de referencias</li>
+            <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Compositores</strong> que quieren generar nuevas ideas musicales</li>
+            <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Músicos</strong> que buscan crear backing tracks o karaokes</li>
+            <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Educadores musicales</strong> que necesitan material didáctico</li>
+            <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Aficionados</strong> que quieren experimentar con su música favorita</li>
+        </ul>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title text-primary">¿Por qué elegir SouniQ?</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-bolt text-warning me-2"></i>
+                        <strong>Rápido:</strong> Procesamiento optimizado en la nube
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-shield-alt text-success me-2"></i>
+                        <strong>Seguro:</strong> Tus archivos están protegidos
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-user-friendly text-info me-2"></i>
+                        <strong>Fácil:</strong> Interface intuitiva y moderna
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-star text-warning me-2"></i>
+                        <strong>Calidad:</strong> Resultados profesionales
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-headset text-primary me-2"></i>
+                        <strong>Soporte:</strong> Atención personalizada
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-body text-center">
+                <h5 class="card-title">¿Necesitas ayuda?</h5>
+                <p class="card-text small">
+                    Consulta nuestro centro de ayuda o contacta con nuestro equipo de soporte.
+                </p>
+                <a href="{% url 'core:help' %}" class="btn btn-primary">
+                    <i class="fas fa-question-circle me-2"></i>Centro de Ayuda
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

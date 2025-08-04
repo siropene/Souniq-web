@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Error 404 - Página no encontrada{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <i class="fas fa-exclamation-triangle text-warning" style="font-size: 5rem;"></i>
+    <h1 class="display-4 text-primary mt-4">404</h1>
+    <h2 class="h3 text-muted mb-4">Página no encontrada</h2>
+    <p class="lead text-muted mb-4">
+        Lo sentimos, la página que buscas no existe o ha sido movida.
+    </p>
+    <div class="d-flex gap-3 justify-content-center">
+        <a href="{% url 'core:home' %}" class="btn btn-primary">
+            <i class="fas fa-home me-2"></i>Volver al Inicio
+        </a>
+        <a href="javascript:history.back()" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver Atrás
+        </a>
+    </div>
+</div>
+{% endblock %}

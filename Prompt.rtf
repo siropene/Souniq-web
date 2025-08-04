@@ -1,0 +1,342 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\froman\fcharset0 Times-Roman;\f2\fnil\fcharset0 .AppleSystemUIFontMonospaced-Regular;
+\f3\fnil\fcharset0 .SFNS-Regular_wdth_opsz110000_GRAD_wght2580000;\f4\fnil\fcharset0 HelveticaNeue;\f5\fnil\fcharset0 AppleColorEmoji;
+\f6\fnil\fcharset0 HelveticaNeue-Bold;\f7\fnil\fcharset0 LucidaGrande;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red255\green255\blue255;\red241\green241\blue242;
+\red29\green29\blue31;\red245\green93\blue20;\red45\green45\blue45;\red246\green246\blue246;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;\cssrgb\c100000\c100000\c100000\c0;\cssrgb\c95686\c95686\c96078;
+\cssrgb\c15294\c15294\c16471;\cssrgb\c97647\c45098\c8627;\cssrgb\c23137\c23137\c23137;\cssrgb\c97255\c97255\c97255;}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{decimal\}}{\leveltext\leveltemplateid1\'01\'00;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{circle\}}{\leveltext\leveltemplateid2\'01\uc0\u9702 ;}{\levelnumbers;}\fi-360\li1440\lin1440 }{\listname ;}\listid1}
+{\list\listtemplateid2\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid101\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid2}
+{\list\listtemplateid3\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid201\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid3}
+{\list\listtemplateid4\listhybrid{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{decimal\}}{\leveltext\leveltemplateid301\'01\'00;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listname ;}\listid4}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}{\listoverride\listid3\listoverridecount0\ls3}{\listoverride\listid4\listoverridecount0\ls4}}
+\paperw11900\paperh16840\margl1440\margr1440\vieww34000\viewh18540\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 Hola,\
+\
+Quiero crear una Web con Django python, que tenga las siguientes caracter\'edsticas. La web se basa en 3 funcionalidades principales:\
+\
+1- Permite al usuario subir una canci\'f3n y, mediante una api (Comentada posteriormente), dividir esa canci\'f3n en 7 Stems que se devuelven al usuario para ser escuchados o descargados\
+2- Permite al usuario que, partiendo de uno o varios stems ya generados, generar archivos midi para cada uno de ellos, permitiendo al usuario visualizarlos y descargarlos. Al igual que en el paso anterior, la conversion a midi se realizar\'e1 mediante una API\
+3- Permite al usuario generar una nueva canci\'f3n en base uno o varios archivos midi seleccionados, de los generados por la herramienta. Usara una api tambi\'e9n para este fin. Esta nueva canci\'f3n podr\'e1 escucharse y descargarse.\
+  \
+\
+** Requisitos t\'e9cnicos:\
+- Debe usar de base python 11, ya que usara clientes gradio para conectar con hugginface\
+\cf2 \
+** Apariencia\
+\
+La apariencia debe se moderna y profesional. El logotipo de la app es con fondo blanco y letras negras (el logo esta en este espacio LOGO_SOUNIQ.png), por lo que usa colores que puedan quedar bien con dicho logo.\
+\
+La web debe tener \
+	- una cabecera donde incluya el logo, el panels de navegaci\'f3n y la funcionalidad asociada a la gesti\'f3n del usuario logueado\
+	- Una secci\'f3n principal donde se mostrar\'e1 toda la funcionalidad\
+	- un foorter con enlaces de inter\'e9s, derechos, etc\'85\
+\
+** El panel de navegaci\'f3n debe contar con las siguientes secciones (a parte de la de gesti\'f3n de usuario comentada anteriormente)\
+	- Pagina principal donde se muestren por separado y en formato listado las canciones procesadas, y que disponga de funcionalidad para subir nuevas canciones. \
+	- Pagina de generaci\'f3n de Stems\
+	- Pagina de conversi\'f3n a midi\
+	- Pagina de generaci\'f3n de nuevos tracks\
+\
+\
+** Funcionalidad\
+\
+A nivel de funcionalidad la web debe de tener:\
+\
+- Una gesti\'f3n de usuario: el usuario debe hacer login para poder entrar. La web debe proporcionar m\'e9todos para resetear/cambiar la contrase\'f1a usando doble factor. Secci\'f3n para modificar datos de usuario, etc.\
+- Pagina principal: se mostrar\'e1 en formato listado todas las canciones ya procesadas para ese usuario, y dar\'e1 la opci\'f3n de subir nuevas canciones. Si se sube una nueva canci\'f3n, se debe indicar cuando la canci\'f3n esta subida.\
+- Pagina de generaci\'f3n de Stems: Mostrar\'e1 el listado de canciones subidas, incluyendo los stems generados para cada una de ellas, con posibilidad de escuchar tanto la canci\'f3n original como los stems. Si una canci\'f3n ha sido subida pero no ha generado Stems, debe permitir ejecutar el proceso e generaci\'f3n de Stems\
+- Pagina de conversi\'f3n a midi: mostrar\'e1 , agrupado por canci\'f3n, el listado de los Stems Generados y permitir\'e1 escucharlos y descargarlos. Los stems que ya hayan generado midi, se mostrar\'e1n tambi\'e9n los archivos midi y se permitir\'e1 descargarlos. Adem\'e1s, debe permitir seleccionar stems y ejecutar la acci\'f3n de generar los midis oportunos, si los stems no tienen midi generado\
+- Pagina de generaci\'f3n de nuevos tracks: debe mostrar todos los midis generados y permitir seleccionar uno de ellos para generar un nuevo track. Al generar un nuevo track, este se descargar\'e1 autom\'e1ticamente sin incluirse en la plataforma\
+
+\f1\fs28 \cb3 \expnd0\expndtw0\kerning0
+\
+** Apis\
+\
+Las apis a las que debe llamar la web son:\
+\
+- Divisi\'f3n en stems: https://huggingface.co/spaces/SouniQ/Modulo1 \
+	Ejemplo de cliente: \
+
+\f2 \cf4 \cb5 from gradio_client import Client, handle_file\
+\pard\pardeftab720\partightenfactor0
+\cf4 \
+client = Client(
+\f1 "SouniQ/Modulo1"
+\f2 )\
+result = client.predict(\
+		input_wav_path=handle_file('https://github.com/gradio-app/gradio/raw/main/test/test_files/audio_sample.wav'),\
+		api_name=\cf6 "/predict"\cf4 \
+)\
+print(result)\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1 \cf2 \cb3 	El api devolver\'e1 7 stems para cada track\
+\
+- Conversi\'f3n a midi: https://huggingface.co/spaces/SouniQ/Modulo2\
+	Ejemplo de cliente:\
+\pard\pardeftab720\partightenfactor0
+
+\f2 \cf4 \cb5 from gradio_client import Client, handle_file\
+\
+client = Client(
+\f1 "SouniQ/Modulo2"
+\f2 )\
+result = client.predict(\
+		input_wav_path=handle_file('https://github.com/gradio-app/gradio/raw/main/test/test_files/audio_sample.wav'),\
+		api_name=\cf6 "/predict"\cf4 \
+)\
+print(result)\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1 \cf2 \cb3 	El Api devolvera el fichero midi para el audio enviado, por lo que ser\'e1 necesario llamarla una vez para cada audio a convertir\
+\
+- Generaci\'f3n de nuevos tracks: https://huggingface.co/spaces/asigalov61/Giant-Music-Transformer\
+	Ejemplo de cliente:\
+\pard\pardeftab720\partightenfactor0
+
+\f2 \cf4 \cb5 from gradio_client import Client, handle_file\
+\
+client = Client(
+\f1 "asigalov61/Giant-Music-Transformer"
+\f2 )\
+result = client.predict(\
+		input_midi=handle_file('https://github.com/gradio-app/gradio/raw/main/test/test_files/sample_file.pdf'),\
+		num_prime_tokens=600,\
+		num_gen_tokens=600,\
+		num_mem_tokens=6990,\
+		gen_outro="Auto",\
+		gen_drums=False,\
+		model_temperature=0.9,\
+		model_sampling_top_p=0.96,\
+		api_name=\cf6 "/generate_callback_wrapper"\cf4 \
+)\
+print(result)\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1 \cf2 \cb3 	El api devuelve el 8 versiones diferentes generadas por cada midi. Solo ser\'e1 necesario disponibilidad la primera. Todas las opciones que permite el modelo deben mostrarse al usuario para que pueda configurarlo \
+\
+SouniqTFM2025\
+\
+\pard\pardeftab720\sa160\partightenfactor0
+
+\f3\b\fs32 \cf7 \cb8 \'a1Tu aplicaci\'f3n web SouniQ est\'e1 lista!\
+\pard\pardeftab720\sa320\partightenfactor0
+
+\f4\b0\fs26 \cf7 He creado exitosamente tu aplicaci\'f3n web Django con todas las funcionalidades solicitadas. Aqu\'ed tienes un resumen de lo que se ha implementado:\
+\pard\pardeftab720\sa160\partightenfactor0
+
+\f5 \cf7 \uc0\u10024 
+\f4 \'a0
+\f6\b Caracter\'edsticas Principales
+\f4\b0 \
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0
+\f6\b \cf7 \kerning1\expnd0\expndtw0 {\listtext	1	}
+\f5\b0 \expnd0\expndtw0\kerning0
+\uc0\u55356 \u57256 
+\f6\b  Dise\'f1o Moderno y Profesional
+\f4\b0 \cb1 \
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls1\ilvl1\cf7 \cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Interfaz responsive con Bootstrap 5\cb1 \
+\ls1\ilvl1\cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Dise\'f1o compatible con tu logo (fondo blanco/texto negro)\cb1 \
+\ls1\ilvl1\cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Animaciones suaves y gradientes modernos\cb1 \
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0
+\f6\b \cf7 \cb8 \kerning1\expnd0\expndtw0 {\listtext	2	}
+\f5\b0 \expnd0\expndtw0\kerning0
+\uc0\u55357 \u56592 
+\f6\b  Sistema de Autenticaci\'f3n Completo
+\f4\b0 \cb1 \
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls1\ilvl1\cf7 \cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Registro de usuarios\cb1 \
+\ls1\ilvl1\cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Inicio de sesi\'f3n\cb1 \
+\ls1\ilvl1\cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Restablecimiento de contrase\'f1a por email\cb1 \
+\ls1\ilvl1\cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Preparado para 2FA (django-allauth)\cb1 \
+\ls1\ilvl1\cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Verificaci\'f3n de email\cb1 \
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0
+\f6\b \cf7 \cb8 \kerning1\expnd0\expndtw0 {\listtext	3	}
+\f5\b0 \expnd0\expndtw0\kerning0
+\uc0\u55356 \u57269 
+\f6\b  Procesamiento de Audio
+\f4\b0 \cb1 \
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls1\ilvl1\cf7 \cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Subida de archivos de audio\cb1 \
+\ls1\ilvl1\cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Integraci\'f3n con HuggingFace APIs (SouniQ/Modulo1 y SouniQ/Modulo2)\cb1 \
+\ls1\ilvl1\cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Separaci\'f3n de stems\cb1 \
+\ls1\ilvl1\cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Conversi\'f3n a MIDI\cb1 \
+\ls1\ilvl1\cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Descarga de archivos procesados\cb1 \
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0
+\f6\b \cf7 \cb8 \kerning1\expnd0\expndtw0 {\listtext	4	}
+\f5\b0 \expnd0\expndtw0\kerning0
+\uc0\u55357 \u56561 
+\f6\b  Navegaci\'f3n Intuitiva
+\f4\b0 \cb1 \
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls1\ilvl1\cf7 \cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Dashboard personalizado\cb1 \
+\ls1\ilvl1\cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Historial de procesamiento\cb1 \
+\ls1\ilvl1\cb8 \kerning1\expnd0\expndtw0 {\listtext	
+\f7 \uc0\u9702 
+\f4 	}\expnd0\expndtw0\kerning0
+Panel de administraci\'f3n\cb1 \
+\pard\pardeftab720\sa160\partightenfactor0
+
+\f5 \cf7 \cb8 \uc0\u55356 \u57104 
+\f4 \'a0
+\f6\b URLs Disponibles
+\f4\b0 \
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls2\ilvl0
+\f6\b \cf7 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+P\'e1gina principal
+\f4\b0 :\'a0{\field{\*\fldinst{HYPERLINK "vscode-file://vscode-app/Applications/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/code/electron-browser/workbench/workbench.html"}}{\fldrslt http://127.0.0.1:8000/}}\cb1 \
+\ls2\ilvl0
+\f6\b \cb8 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Registro
+\f4\b0 :\'a0{\field{\*\fldinst{HYPERLINK "vscode-file://vscode-app/Applications/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/code/electron-browser/workbench/workbench.html"}}{\fldrslt http://127.0.0.1:8000/accounts/signup/}}\cb1 \
+\ls2\ilvl0
+\f6\b \cb8 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Iniciar sesi\'f3n
+\f4\b0 :\'a0{\field{\*\fldinst{HYPERLINK "vscode-file://vscode-app/Applications/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/code/electron-browser/workbench/workbench.html"}}{\fldrslt http://127.0.0.1:8000/accounts/login/}}\cb1 \
+\ls2\ilvl0
+\f6\b \cb8 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Dashboard
+\f4\b0 :\'a0{\field{\*\fldinst{HYPERLINK "vscode-file://vscode-app/Applications/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/code/electron-browser/workbench/workbench.html"}}{\fldrslt http://127.0.0.1:8000/dashboard/}}\cb1 \
+\ls2\ilvl0
+\f6\b \cb8 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Subir audio
+\f4\b0 :\'a0{\field{\*\fldinst{HYPERLINK "vscode-file://vscode-app/Applications/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/code/electron-browser/workbench/workbench.html"}}{\fldrslt http://127.0.0.1:8000/upload/}}\cb1 \
+\ls2\ilvl0
+\f6\b \cb8 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Admin
+\f4\b0 :\'a0{\field{\*\fldinst{HYPERLINK "vscode-file://vscode-app/Applications/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/code/electron-browser/workbench/workbench.html"}}{\fldrslt http://127.0.0.1:8000/admin/}}\cb1 \
+\pard\pardeftab720\sa160\partightenfactor0
+
+\f5 \cf7 \cb8 \uc0\u55357 \u56420 
+\f4 \'a0
+\f6\b Credenciales de Administrador
+\f4\b0 \
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls3\ilvl0
+\f6\b \cf7 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Usuario
+\f4\b0 :\'a0
+\fs24 souniqadmin
+\fs26 \cb1 \
+\ls3\ilvl0
+\f6\b \cb8 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Email
+\f4\b0 :\'a0
+\fs24 alberto.herrasti.figueroa@gmail.com
+\fs26 \cb1 \
+\ls3\ilvl0
+\f6\b \cb8 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Contrase\'f1a
+\f4\b0 : (la que ingresaste)\cb1 \
+\pard\pardeftab720\sa160\partightenfactor0
+
+\f5 \cf7 \cb8 \uc0\u55357 \u56960 
+\f4 \'a0
+\f6\b Pr\'f3ximos Pasos
+\f4\b0 \
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls4\ilvl0
+\f6\b \cf7 \kerning1\expnd0\expndtw0 {\listtext	1	}\expnd0\expndtw0\kerning0
+Prueba la aplicaci\'f3n
+\f4\b0 \'a0navegando por las diferentes secciones\cb1 \
+\ls4\ilvl0
+\f6\b \cb8 \kerning1\expnd0\expndtw0 {\listtext	2	}\expnd0\expndtw0\kerning0
+Sube tu logo
+\f4\b0 \'a0en la carpeta\'a0
+\fs24 static/img/
+\fs26 \cb1 \
+\ls4\ilvl0
+\f6\b \cb8 \kerning1\expnd0\expndtw0 {\listtext	3	}\expnd0\expndtw0\kerning0
+Configura email
+\f4\b0 \'a0para funciones de restablecimiento\cb1 \
+\ls4\ilvl0
+\f6\b \cb8 \kerning1\expnd0\expndtw0 {\listtext	4	}\expnd0\expndtw0\kerning0
+Personaliza colores
+\f4\b0 \'a0en\'a0\cb1 \
+\ls4\ilvl0
+\f6\b \cb8 \kerning1\expnd0\expndtw0 {\listtext	5	}\expnd0\expndtw0\kerning0
+Integra APIs reales
+\f4\b0 \'a0de HuggingFace cuando est\'e9s listo\cb1 \
+\pard\pardeftab720\sa160\partightenfactor0
+
+\f5 \cf7 \cb8 \uc0\u55357 \u57056 
+\f4 \'a0
+\f6\b Comandos \'datiles
+\f4\b0 \
+\pard\pardeftab720\sa320\partightenfactor0
+\cf7 Para detener el servidor:\'a0
+\fs24 Ctrl+C
+\fs26 \'a0en la terminal Para reiniciar:\'a0
+\fs24 python [manage.py](http://_vscodecontentref_/1) runserver
+\fs26 \'a0Para crear migraciones:\'a0
+\fs24 python [manage.py](http://_vscodecontentref_/2) makemigrations
+\fs26 \'a0Para aplicar migraciones:\'a0
+\fs24 python [manage.py](http://_vscodecontentref_/3) migrate
+\fs26 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f2\fs28 \cf2 \cb3 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1 \cf2 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f2 \cf4 \cb5 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \cb1 \kerning1\expnd0\expndtw0  }

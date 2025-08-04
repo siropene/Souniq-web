@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Iniciar Sesión - SouniQ{% endblock %}
+
+{% block main_class %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row min-vh-100">
+        <!-- Left side - Login Form -->
+        <div class="col-lg-6 d-flex align-items-center">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-md-8 col-lg-6">
+                        <div class="text-center mb-4">
+                            <img src="{% static 'images/LOGO_SOUNIQ.png' %}" alt="SouniQ" height="60" class="mb-3">
+                            <h2 class="text-primary fw-bold">Bienvenido de vuelta</h2>
+                            <p class="text-muted">Inicia sesión para continuar con tu música</p>
+                        </div>
+
+                        <div class="card shadow-lg border-0">
+                            <div class="card-body p-4">
+                                <form method="post">
+                                    {% csrf_token %}
+                                    
+                                        <div class="mb-3">
+                                            <label for="{{ form.username.id_for_label }}" class="form-label">Usuario</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                                {{ form.username.as_widget }}
+                                            </div>
+                                            {% if form.username.errors %}
+                                                <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>                                    <div class="mb-3">
+                                        <label for="{{ form.password.id_for_label }}" class="form-label">Contraseña</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                            {{ form.password.as_widget }}
+                                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                                <i class="fas fa-eye" id="toggleIcon"></i>
+                                            </button>
+                                        </div>
+                                        {% if form.password.errors %}
+                                            <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mb-3 d-flex justify-content-between align-items-center">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="rememberMe">
+                                            <label class="form-check-label small" for="rememberMe">
+                                                Recordarme
+                                            </label>
+                                        </div>
+                                        <a href="{% url 'accounts:password_reset_request' %}" class="text-decoration-none small">
+                                            ¿Olvidaste tu contraseña?
+                                        </a>
+                                    </div>
+
+                                    {% if form.non_field_errors %}
+                                        <div class="alert alert-danger">
+                                            {{ form.non_field_errors.0 }}
+                                        </div>
+                                    {% endif %}
+
+                                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                                        <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                                    </button>
+                                </form>
+
+                                <div class="text-center">
+                                    <p class="text-muted small mb-0">
+                                        ¿No tienes cuenta? 
+                                        <a href="{% url 'accounts:register' %}" class="text-decoration-none">
+                                            Regístrate aquí
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right side - Background/Info -->
+        <div class="col-lg-6 bg-primary text-white d-none d-lg-flex align-items-center">
+            <div class="container text-center">
+                <i class="fas fa-music fa-5x mb-4 opacity-75"></i>
+                <h3 class="fw-bold mb-3">Transforma tu Música con IA</h3>
+                <p class="lead mb-4">
+                    Accede a las herramientas más avanzadas de procesamiento musical. 
+                    Separa stems, convierte a MIDI y genera nuevas composiciones.
+                </p>
+                <div class="row g-3">
+                    <div class="col-4">
+                        <div class="bg-white bg-opacity-10 rounded p-3">
+                            <i class="fas fa-layer-group fa-2x mb-2"></i>
+                            <div class="small">Separación de Stems</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="bg-white bg-opacity-10 rounded p-3">
+                            <i class="fas fa-file-audio fa-2x mb-2"></i>
+                            <div class="small">Conversión MIDI</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="bg-white bg-opacity-10 rounded p-3">
+                            <i class="fas fa-magic fa-2x mb-2"></i>
+                            <div class="small">Generación IA</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePassword() {
+    const passwordField = document.getElementById('{{ form.password.id_for_label }}');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleIcon.className = 'fas fa-eye-slash';
+    } else {
+        passwordField.type = 'password';
+        toggleIcon.className = 'fas fa-eye';
+    }
+}
+
+// Auto-focus username field
+document.getElementById('{{ form.username.id_for_label }}').focus();
+</script>
+{% endblock %}

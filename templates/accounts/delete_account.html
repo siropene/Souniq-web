@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Cuenta - SouniQ{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Eliminar Cuenta Permanentemente
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger" role="alert">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-warning me-2"></i>
+                            ¡ADVERTENCIA! Esta acción es irreversible
+                        </h5>
+                        <p class="mb-0">
+                            Una vez eliminada tu cuenta, no podrás recuperarla ni ninguno de tus datos. 
+                            Por favor, lee cuidadosamente lo que se eliminará antes de continuar.
+                        </p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="text-danger">
+                                <i class="fas fa-trash-alt me-2"></i>
+                                Qué se eliminará:
+                            </h5>
+                            <ul class="text-danger">
+                                <li>Tu perfil de usuario y toda la información personal</li>
+                                <li>Todas las canciones que hayas subido</li>
+                                <li>Todos los stems generados</li>
+                                <li>Todos los archivos MIDI creados</li>
+                                <li>Todas las pistas generadas con IA</li>
+                                <li>Todo el historial de actividad</li>
+                                <li>Todas las configuraciones y preferencias</li>
+                            </ul>
+
+                            <div class="alert alert-warning mt-3" role="alert">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Nota:</strong> Si tienes archivos importantes, asegúrate de descargarlos antes de eliminar tu cuenta.
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-lightbulb me-2"></i>
+                                        ¿Estás seguro?
+                                    </h6>
+                                    <p class="text-muted small">
+                                        Antes de eliminar tu cuenta, considera estas alternativas:
+                                    </p>
+                                    <ul class="small">
+                                        <li>Simplemente cerrar sesión y tomarte un descanso</li>
+                                        <li>Cambiar tu contraseña si hay problemas de seguridad</li>
+                                        <li>Contactar al soporte si tienes algún problema</li>
+                                        <li>Descargar tus archivos importantes</li>
+                                    </ul>
+                                    
+                                    <div class="mt-3">
+                                        <a href="{% url 'accounts:profile' %}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-arrow-left me-2"></i>
+                                            Volver al Perfil
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <h5 class="text-danger mb-3">Confirmación de Eliminación</h5>
+                        <p class="text-muted">
+                            Para confirmar que quieres eliminar tu cuenta permanentemente, 
+                            escribe <strong>DELETE</strong> en el campo de abajo y haz clic en el botón de eliminar.
+                        </p>
+
+                        <form method="post" class="mt-4" id="deleteForm">
+                            {% csrf_token %}
+                            
+                            <div class="row justify-content-center">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="confirm_delete" class="form-label">
+                                            Escribe <strong>DELETE</strong> para confirmar:
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            class="form-control text-center" 
+                                            id="confirm_delete" 
+                                            name="confirm_delete" 
+                                            placeholder="DELETE"
+                                            required
+                                            autocomplete="off"
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                <a href="{% url 'accounts:profile' %}" class="btn btn-secondary me-md-2">
+                                    <i class="fas fa-times me-2"></i>
+                                    Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                                    <i class="fas fa-trash-alt me-2"></i>
+                                    Eliminar Mi Cuenta Permanentemente
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de contacto -->
+            <div class="card mt-4">
+                <div class="card-body text-center">
+                    <h6 class="card-title">
+                        <i class="fas fa-headset me-2"></i>
+                        ¿Necesitas ayuda?
+                    </h6>
+                    <p class="text-muted">
+                        Si tienes algún problema o pregunta, nuestro equipo de soporte está aquí para ayudarte.
+                    </p>
+                    <a href="mailto:soporte@souniq.com" class="btn btn-outline-primary">
+                        <i class="fas fa-envelope me-2"></i>
+                        Contactar Soporte
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmInput = document.getElementById('confirm_delete');
+    const deleteButton = document.getElementById('deleteButton');
+    const deleteForm = document.getElementById('deleteForm');
+    
+    // Habilitar/deshabilitar botón según la confirmación
+    confirmInput.addEventListener('input', function() {
+        if (this.value === 'DELETE') {
+            deleteButton.disabled = false;
+            deleteButton.classList.remove('btn-secondary');
+            deleteButton.classList.add('btn-danger');
+        } else {
+            deleteButton.disabled = true;
+            deleteButton.classList.remove('btn-danger');
+            deleteButton.classList.add('btn-secondary');
+        }
+    });
+    
+    // Confirmación adicional al enviar el formulario
+    deleteForm.addEventListener('submit', function(e) {
+        const confirmed = confirm(
+            '¿Estás absolutamente seguro de que quieres eliminar tu cuenta? ' +
+            'Esta acción NO se puede deshacer y perderás todos tus datos para siempre.'
+        );
+        
+        if (!confirmed) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Mostrar indicador de carga
+        deleteButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Eliminando...';
+        deleteButton.disabled = true;
+    });
+    
+    // Advertencia al intentar salir de la página
+    let formModified = false;
+    confirmInput.addEventListener('input', function() {
+        formModified = this.value.length > 0;
+    });
+    
+    window.addEventListener('beforeunload', function(e) {
+        if (formModified && confirmInput.value !== 'DELETE') {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+});
+</script>
+{% endblock %}

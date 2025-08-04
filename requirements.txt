@@ -1,0 +1,13 @@
+Django>=4.2,<5.0
+gradio-client>=0.7.0
+huggingface-hub>=0.16.0
+Pillow>=9.0.0
+python-decouple>=3.6
+whitenoise>=6.0.0
+django-crispy-forms>=2.0
+crispy-bootstrap5>=0.7
+django-widget-tweaks>=1.4.12
+gunicorn>=21.0.0
+# Eliminamos Celery y Redis para versión síncrona
+# celery>=5.3.0
+# redis>=4.5.0

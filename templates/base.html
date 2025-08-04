@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SouniQ - Procesamiento Musical con IA{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    
+    <!-- Estilos para el overlay de progreso -->
+    <style>
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .processing-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .processing-icon {
+            color: #007bff;
+        }
+        
+        .processing-title {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .processing-message {
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        
+        .progress {
+            margin: 0 auto;
+        }
+        
+        .processing-overlay .progress-bar {
+            transition: width 0.3s ease;
+        }
+        
+        .processing-status {
+            color: #999;
+            font-size: 0.875rem;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navegación -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container">
+            <!-- Logo -->
+            <a class="navbar-brand d-flex align-items-center" href="{% if user.is_authenticated %}{% url 'core:dashboard' %}{% else %}{% url 'core:home' %}{% endif %}">
+                <img src="{% static 'images/LOGO_SOUNIQ.png' %}" alt="SouniQ" height="40" class="me-2">
+                <span class="fw-bold">SouniQ</span>
+            </a>
+            
+            <!-- Toggle button para móvil -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Enlaces de navegación -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                {% if user.is_authenticated %}
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
+                           href="{% url 'core:dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'song_list' %}active{% endif %}" 
+                           href="{% url 'music_processing:song_list' %}">
+                            <i class="fas fa-music me-1"></i>Mis Canciones
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'stems' %}active{% endif %}" 
+                           href="{% url 'music_processing:stems' %}">
+                            <i class="fas fa-layer-group me-1"></i>Stems
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'midi_conversion' %}active{% endif %}" 
+                           href="{% url 'music_processing:midi_conversion' %}">
+                            <i class="fas fa-file-audio me-1"></i>MIDI
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'track_generation' %}active{% endif %}" 
+                           href="{% url 'music_processing:track_generation' %}">
+                            <i class="fas fa-magic me-1"></i>Generar Tracks
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Menú de usuario -->
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" 
+                           id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            {% if user.profile.avatar %}
+                                <img src="{{ user.profile.avatar.url }}" alt="Avatar" 
+                                     class="rounded-circle me-2" width="32" height="32">
+                            {% else %}
+                                <i class="fas fa-user-circle me-2 fs-4"></i>
+                            {% endif %}
+                            {{ user.get_full_name|default:user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                <i class="fas fa-user me-2"></i>Mi Perfil
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:activity_log' %}">
+                                <i class="fas fa-history me-2"></i>Actividad
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'core:help' %}">
+                                <i class="fas fa-question-circle me-2"></i>Ayuda
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+                {% else %}
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:login' %}">
+                            <i class="fas fa-sign-in-alt me-1"></i>Iniciar Sesión
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:register' %}">
+                            <i class="fas fa-user-plus me-1"></i>Registrarse
+                        </a>
+                    </li>
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mensajes -->
+    {% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+            {% if message.tags == 'success' %}
+                <i class="fas fa-check-circle me-2"></i>
+            {% elif message.tags == 'error' %}
+                <i class="fas fa-exclamation-circle me-2"></i>
+            {% elif message.tags == 'warning' %}
+                <i class="fas fa-exclamation-triangle me-2"></i>
+            {% else %}
+                <i class="fas fa-info-circle me-2"></i>
+            {% endif %}
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Contenido principal -->
+    <main class="{% block main_class %}container my-4{% endblock %}">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light mt-5">
+        <div class="container py-4">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5 class="mb-3">
+                        <img src="{% static 'images/LOGO_SOUNIQ.png' %}" alt="SouniQ" height="30" class="me-2">
+                        SouniQ
+                    </h5>
+                    <p class="text-muted">
+                        Plataforma de procesamiento musical avanzado con inteligencia artificial.
+                        Separa, convierte y genera música de forma profesional.
+                    </p>
+                </div>
+                <div class="col-md-2">
+                    <h6 class="mb-3">Producto</h6>
+                    <ul class="list-unstyled">
+                        {% if user.is_authenticated %}
+                        <li><a href="{% url 'music_processing:song_list' %}" class="text-muted text-decoration-none">Mis Canciones</a></li>
+                        <li><a href="{% url 'music_processing:stems' %}" class="text-muted text-decoration-none">Stems</a></li>
+                        <li><a href="{% url 'music_processing:midi_conversion' %}" class="text-muted text-decoration-none">MIDI</a></li>
+                        <li><a href="{% url 'music_processing:track_generation' %}" class="text-muted text-decoration-none">Generar</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-md-2">
+                    <h6 class="mb-3">Cuenta</h6>
+                    <ul class="list-unstyled">
+                        {% if user.is_authenticated %}
+                        <li><a href="{% url 'accounts:profile' %}" class="text-muted text-decoration-none">Mi Perfil</a></li>
+                        <li><a href="{% url 'accounts:activity_log' %}" class="text-muted text-decoration-none">Actividad</a></li>
+                        {% else %}
+                        <li><a href="{% url 'accounts:login' %}" class="text-muted text-decoration-none">Iniciar Sesión</a></li>
+                        <li><a href="{% url 'accounts:register' %}" class="text-muted text-decoration-none">Registrarse</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-md-2">
+                    <h6 class="mb-3">Soporte</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'core:help' %}" class="text-muted text-decoration-none">Centro de Ayuda</a></li>
+                        <li><a href="{% url 'core:about' %}" class="text-muted text-decoration-none">Acerca de</a></li>
+                        <li><a href="mailto:soporte@souniq.com" class="text-muted text-decoration-none">Contacto</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2">
+                    <h6 class="mb-3">Legal</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'core:privacy' %}" class="text-muted text-decoration-none">Privacidad</a></li>
+                        <li><a href="{% url 'core:terms' %}" class="text-muted text-decoration-none">Términos</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">&copy; 2025 SouniQ. Todos los derechos reservados.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0 text-muted">
+                        Hecho con <i class="fas fa-heart text-danger"></i> para músicos y productores
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Overlay de Progreso -->
+    <div id="processingOverlay" class="processing-overlay" style="display: none;">
+        <div class="processing-content">
+            <div class="processing-icon mb-3">
+                <i class="fas fa-cog fa-spin fa-3x text-primary"></i>
+            </div>
+            <h4 class="processing-title">Procesando...</h4>
+            <p class="processing-message">Por favor espere mientras procesamos su solicitud</p>
+            <div class="progress mb-3" style="width: 300px;">
+                <div id="processingProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                     role="progressbar" style="width: 0%"></div>
+            </div>
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                <span id="processingStatus">Iniciando proceso...</span>
+            </small>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/custom.js' %}"></script>
+    
+    <!-- JavaScript para el overlay de progreso -->
+    <script>
+        class ProcessingOverlay {
+            constructor() {
+                this.overlay = document.getElementById('processingOverlay');
+                this.progressBar = document.getElementById('processingProgressBar');
+                this.status = document.getElementById('processingStatus');
+                this.title = this.overlay.querySelector('.processing-title');
+                this.message = this.overlay.querySelector('.processing-message');
+                this.icon = this.overlay.querySelector('.processing-icon i');
+            }
+            
+            show(options = {}) {
+                const {
+                    title = 'Procesando...',
+                    message = 'Por favor espere mientras procesamos su solicitud',
+                    icon = 'fas fa-cog fa-spin fa-3x text-primary',
+                    progress = 0
+                } = options;
+                
+                this.title.textContent = title;
+                this.message.textContent = message;
+                this.icon.className = icon;
+                this.setProgress(progress);
+                this.setStatus('Iniciando proceso...');
+                this.overlay.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+            
+            hide() {
+                this.overlay.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+            
+            setProgress(percent) {
+                this.progressBar.style.width = percent + '%';
+                this.progressBar.setAttribute('aria-valuenow', percent);
+            }
+            
+            setStatus(statusText) {
+                this.status.textContent = statusText;
+            }
+            
+            updateProgress(percent, statusText) {
+                this.setProgress(percent);
+                if (statusText) this.setStatus(statusText);
+            }
+            
+            updateProgressText(statusText) {
+                this.setStatus(statusText);
+            }
+        }
+        
+        // Instancia global accesible como ProcessingOverlay y processingOverlay
+        window.ProcessingOverlay = ProcessingOverlay;
+        window.processingOverlay = new ProcessingOverlay();
+        
+        // Funciones de conveniencia para diferentes tipos de procesos
+        window.showStemsProcessing = (songTitle = '') => {
+            processingOverlay.show({
+                title: 'Generando Stems',
+                message: songTitle ? `Separando las pistas de "${songTitle}" usando IA. Esto puede tardar varios minutos.` : 'Separando las pistas de audio usando IA. Esto puede tardar varios minutos.',
+                icon: 'fas fa-layer-group fa-spin fa-3x text-info'
+            });
+        };
+        
+        window.showMidiProcessing = (stemId = '') => {
+            processingOverlay.show({
+                title: 'Convirtiendo a MIDI',
+                message: stemId ? `Analizando el stem ${stemId} y generando archivo MIDI. Esto puede tardar unos minutos.` : 'Analizando el audio y generando archivo MIDI. Esto puede tardar unos minutos.',
+                icon: 'fas fa-file-audio fa-spin fa-3x text-warning'
+            });
+        };
+        
+        window.showTrackProcessing = (trackTitle = '', midiSource = '') => {
+            let message = 'Creando múltiples versiones usando IA. Esto puede tardar varios minutos.';
+            if (trackTitle && midiSource) {
+                message = `Creando "${trackTitle}" basada en ${midiSource}. Esto puede tardar varios minutos.`;
+            } else if (trackTitle) {
+                message = `Creando "${trackTitle}". Esto puede tardar varios minutos.`;
+            }
+            
+            processingOverlay.show({
+                title: 'Generando Nueva Canción',
+                message: message,
+                icon: 'fas fa-magic fa-spin fa-3x text-success'
+            });
+        };
+        
+        // Auto-refresh con progreso simulado
+        window.startProgressSimulation = (type = 'default', duration = 30000) => {
+            let progress = 0;
+            const increment = 100 / (duration / 1000); // Progreso por segundo
+            
+            const interval = setInterval(() => {
+                progress += increment;
+                if (progress >= 95) progress = 95; // No llegar al 100% hasta completar
+                
+                processingOverlay.setProgress(progress);
+                
+                // Mensajes de estado dinámicos
+                if (progress < 25) {
+                    processingOverlay.setStatus('Conectando con la IA...');
+                } else if (progress < 50) {
+                    processingOverlay.setStatus('Procesando archivo...');
+                } else if (progress < 75) {
+                    processingOverlay.setStatus('Analizando contenido...');
+                } else {
+                    processingOverlay.setStatus('Finalizando proceso...');
+                }
+            }, 1000);
+            
+            // Limpiar interval cuando se oculte el overlay
+            const originalHide = processingOverlay.hide;
+            processingOverlay.hide = function() {
+                clearInterval(interval);
+                originalHide.call(this);
+                processingOverlay.hide = originalHide; // Restaurar función original
+            };
+        };
+        
+        console.log('ProcessingOverlay system loaded');
+        console.log('showStemsProcessing available:', typeof window.showStemsProcessing);
+        console.log('showMidiProcessing available:', typeof window.showMidiProcessing);
+        console.log('showTrackProcessing available:', typeof window.showTrackProcessing);
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

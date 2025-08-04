@@ -1,0 +1,416 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Generación de Stems - SouniQ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2 text-primary">
+            <i class="fas fa-layer-group me-2"></i>Generación de Stems
+        </h1>
+        <p class="text-muted">Genera y gestiona los stems de tus canciones usando IA</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" name="search" placeholder="Buscar canciones..." 
+                           value="{{ search_query|default:'' }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">Todos los estados</option>
+                    <option value="uploaded" {% if status_filter == 'uploaded' %}selected{% endif %}>Sin Stems</option>
+                    <option value="processing_stems" {% if status_filter == 'processing_stems' %}selected{% endif %}>Procesando</option>
+                    <option value="stems_completed" {% if status_filter == 'stems_completed' %}selected{% endif %}>Stems Completados</option>
+                    <option value="error" {% if status_filter == 'error' %}selected{% endif %}>Error</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="fas fa-filter me-2"></i>Filtrar
+                </button>
+                <a href="{% url 'music_processing:stems' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Songs and Stems List -->
+{% if songs %}
+<div class="row">
+    {% for song in songs %}
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0 text-white">
+                            <i class="fas fa-music me-2"></i>{{ song.title }}
+                        </h5>
+                        <small class="text-white-50">{{ song.filename }}</small>
+                    </div>
+                    <div class="col-auto">
+                        <span class="badge status-badge status-{{ song.status }}">
+                            {{ song.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <!-- Original Song -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-secondary">
+                            <i class="fas fa-file-audio me-2"></i>Canción Original
+                        </h6>
+                        {% if song.original_file %}
+                        <div class="audio-player mb-2">
+                            <audio controls preload="metadata" class="w-100">
+                                <source src="{{ song.original_file.url }}" type="audio/mpeg">
+                                Tu navegador no soporta el elemento de audio.
+                            </audio>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex gap-2">
+                            {% if song.original_file %}
+                            <a href="{% url 'music_processing:download_file' 'song' song.id %}" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-download me-1"></i>Descargar
+                            </a>
+                            {% endif %}
+                            
+                            {% if song.status == 'uploaded' %}
+                            <form method="post" action="{% url 'music_processing:generate_stems' song.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success" id="generate-btn-{{ song.id }}">
+                                    <i class="fas fa-layer-group me-1"></i>Generar Stems
+                                </button>
+                            </form>
+                            {% elif song.status == 'processing_stems' %}
+                            <div class="processing-info" {% if song.active_task %}data-task-id="{{ song.active_task.celery_task_id }}"{% endif %}>
+                                <button class="btn btn-sm btn-warning" disabled>
+                                    <i class="fas fa-spinner fa-spin me-1"></i>Procesando con IA...
+                                </button>
+                                <div class="mt-2">
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" 
+                                             role="progressbar" style="width: {% if song.active_task %}{{ song.active_task.progress_percentage }}{% else %}0{% endif %}%" 
+                                             aria-valuenow="{% if song.active_task %}{{ song.active_task.progress_percentage }}{% else %}0{% endif %}" 
+                                             aria-valuemin="0" aria-valuemax="100">
+                                            <span class="task-progress">{% if song.active_task %}{{ song.active_task.progress_percentage }}{% else %}0{% endif %}%</span>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted mt-1 detailed-status" style="display: none;">Conectando con Hugging Face...</small>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-secondary">
+                            <i class="fas fa-info-circle me-2"></i>Información
+                        </h6>
+                        <ul class="list-unstyled small text-muted">
+                            <li><i class="fas fa-calendar me-1"></i>Subida: {{ song.uploaded_at|date:"d M Y H:i" }}</li>
+                            {% if song.file_size %}<li><i class="fas fa-hdd me-1"></i>Tamaño: {{ song.file_size|filesizeformat }}</li>{% endif %}
+                            {% if song.duration %}<li><i class="fas fa-clock me-1"></i>Duración: {{ song.duration|floatformat:0 }}s</li>{% endif %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Stems Section -->
+                {% if song.stems.exists %}
+                <div class="stems-section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="text-secondary mb-0">
+                            <i class="fas fa-layer-group me-2"></i>Stems de: <span class="text-primary">"{{ song.title }}"</span>
+                        </h6>
+                        <span class="badge bg-success">{{ song.stems.count }} stems generados</span>
+                    </div>
+                    
+                    <div class="row">
+                        {% for stem in song.stems.all %}
+                        <div class="col-lg-6 col-xl-4 mb-3">
+                            <div class="stem-card bg-light p-3 rounded">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0 text-primary">
+                                        <i class="fas fa-music me-1"></i>{{ stem.get_stem_type_display }}
+                                    </h6>
+                                    <small class="text-muted">#{{ stem.order }}</small>
+                                </div>
+                                
+                                {% if stem.file %}
+                                <div class="audio-player mb-2">
+                                    <audio controls preload="metadata" class="w-100">
+                                        <source src="{{ stem.file.url }}" type="audio/mpeg">
+                                        Tu navegador no soporta el elemento de audio.
+                                    </audio>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'music_processing:download_file' 'stem' stem.id %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download me-1"></i>Descargar
+                                    </a>
+                                    
+                                    {% if stem.midi_file %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>MIDI disponible
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-music me-1"></i>Sin MIDI
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% elif song.status == 'stems_completed' %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Los stems deberían estar disponibles pero no se encuentran. Contacta con soporte.
+                </div>
+                {% elif song.status == 'error' %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Error al procesar:</strong>
+                    {% if song.processing_tasks.first and song.processing_tasks.first.error_message %}
+                        {{ song.processing_tasks.first.error_message }}
+                    {% else %}
+                        Hubo un error al procesar esta canción.
+                    {% endif %}
+                    <div class="mt-2">
+                        <form method="post" action="{% url 'music_processing:generate_stems' song.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-warning">
+                                <i class="fas fa-redo me-1"></i>Reintentar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% elif song.status == 'uploaded' %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Esta canción está lista para generar stems. Haz clic en "Generar Stems" para comenzar el proceso.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if songs.has_other_pages %}
+<nav aria-label="Navegación de páginas">
+    <ul class="pagination justify-content-center">
+        {% if songs.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ songs.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+        {% endif %}
+        
+        {% for num in songs.paginator.page_range %}
+            {% if songs.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+            {% elif num > songs.number|add:'-3' and num < songs.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ num }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if songs.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ songs.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-layer-group text-muted" style="font-size: 4rem;"></i>
+    <h3 class="mt-3 text-muted">No tienes canciones para procesar</h3>
+    <p class="text-muted">Sube canciones primero para poder generar sus stems</p>
+    <a href="{% url 'music_processing:song_list' %}" class="btn btn-primary btn-lg">
+        <i class="fas fa-music me-2"></i>Ir a Mis Canciones
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.stem-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.stem-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.status-badge {
+    font-size: 0.75rem;
+}
+
+.status-uploaded { background-color: #6c757d; }
+.status-processing_stems { background-color: #ffc107; color: #000; }
+.status-stems_completed { background-color: #198754; }
+.status-error { background-color: #dc3545; }
+
+.audio-player audio {
+    height: 40px;
+}
+
+.stems-section {
+    border-top: 1px solid #e9ecef;
+    padding-top: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh para tareas en progreso
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Stems page DOM loaded');
+    
+    const processingCards = document.querySelectorAll('[class*="status-processing"]');
+    console.log('Processing cards found:', processingCards.length);
+    
+    if (processingCards.length > 0) {
+        // Mostrar overlay si hay procesos en curso
+        console.log('Showing overlay for existing processing');
+        if (typeof showStemsProcessing !== 'undefined') {
+            showStemsProcessing();
+        }
+        if (typeof startProgressSimulation === 'function') {
+            startProgressSimulation('stems', 45000); // 45 segundos de simulación
+        }
+        
+        // Refrescar cada 15 segundos si hay tareas en progreso
+        setTimeout(function() {
+            window.location.reload();
+        }, 15000);
+    }
+    
+    // Buscar formularios de generación de stems usando múltiples estrategias
+    console.log('Setting up stem generation form listeners...');
+    
+    // Estrategia 1: Buscar por botones con ID específico o clases
+    const generateButtons = document.querySelectorAll('button[id*="generate-btn"], button.btn-success');
+    console.log('Generate buttons found by button selector:', generateButtons.length);
+    
+    generateButtons.forEach(function(button, index) {
+        // Verificar que el botón realmente sea de generación de stems
+        const buttonText = button.textContent || button.innerText;
+        if (buttonText.includes('Generar Stems') || buttonText.includes('Reintentar')) {
+            const form = button.closest('form');
+            if (form) {
+                console.log('Adding event listener to generate button', index, 'with ID:', button.id, 'text:', buttonText.trim());
+                
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    console.log('Stem generation form submitted via button!', e);
+                    
+                    // Buscar el título de la canción en la estructura HTML actual
+                    const card = form.closest('.card');
+                    const songTitleElement = card ? card.querySelector('.card-header h5') : null;
+                    const songTitle = songTitleElement ? songTitleElement.textContent.trim().replace('🎵', '').trim() : 'esta canción';
+                    
+                    console.log('Generando stems para:', songTitle);
+                    console.log('showStemsProcessing function exists:', typeof showStemsProcessing !== 'undefined');
+                    
+                    // Mostrar overlay inmediatamente
+                    if (typeof showStemsProcessing !== 'undefined') {
+                        showStemsProcessing(songTitle);
+                        console.log('Stems overlay shown');
+                    } else {
+                        console.error('showStemsProcessing function not found');
+                        alert('Error: función de overlay no encontrada');
+                    }
+                    
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Iniciando...';
+                    button.disabled = true;
+                    
+                    // Enviar formulario después de mostrar el overlay
+                    setTimeout(() => {
+                        console.log('Submitting form after overlay');
+                        form.submit();
+                    }, 500);
+                });
+            }
+        }
+    });
+    
+    // Estrategia 2: Buscar formularios de generación de stems como fallback
+    const stemForms = document.querySelectorAll('form[action*="generate_stems"]');
+    console.log('Found stem generation forms via action selector:', stemForms.length);
+    
+    stemForms.forEach(function(form, index) {
+        const button = form.querySelector('button[type="submit"]');
+        if (button && !button.hasAttribute('data-listener-added')) {
+            button.setAttribute('data-listener-added', 'true');
+            console.log('Adding fallback event listener to stem form', index);
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                console.log('Stem generation form submitted via fallback!', e);
+                
+                // Buscar el título de la canción en la estructura HTML actual
+                const card = form.closest('.card');
+                const songTitleElement = card ? card.querySelector('.card-header h5') : null;
+                const songTitle = songTitleElement ? songTitleElement.textContent.trim().replace('🎵', '').trim() : 'esta canción';
+                
+                console.log('Generando stems para:', songTitle);
+                
+                // Mostrar overlay inmediatamente
+                if (typeof showStemsProcessing !== 'undefined') {
+                    showStemsProcessing(songTitle);
+                    console.log('Stems overlay shown via fallback');
+                } else {
+                    console.error('showStemsProcessing function not found');
+                    alert('Error: función de overlay no encontrada');
+                }
+                
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Iniciando...';
+                button.disabled = true;
+                
+                // Enviar formulario después de mostrar el overlay
+                setTimeout(() => {
+                    console.log('Submitting form after overlay via fallback');
+                    form.submit();
+                }, 500);
+            });
+        }
+    });
+});
+</script>
+{% endblock %}
