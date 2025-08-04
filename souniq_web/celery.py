@@ -1,8 +1,11 @@
-from celery import Celery
-import os
+# Celery configuration - DISABLED for PythonAnywhere deployment
+# Ya no utilizamos Celery en este proyecto
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'souniq_web.settings')
+# from celery import Celery
+# import os
 
-app = Celery('souniq_web')
-app.config_from_object('django.conf:settings', namespace='CELERY')
-app.autodiscover_tasks()
+# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'souniq_web.settings')
+
+# app = Celery('souniq_web')
+# app.config_from_object('django.conf:settings', namespace='CELERY')
+# app.autodiscover_tasks()
