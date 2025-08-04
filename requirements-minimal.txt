@@ -1,0 +1,27 @@
+# Requirements simplificados para PythonAnywhere
+# Instalación por fases para evitar conflictos
+
+# FASE 1: Core Django
+Django==4.2.23
+Pillow==10.0.0
+
+# FASE 2: Servidor y archivos estáticos
+whitenoise==6.5.0
+mysqlclient==2.2.0
+
+# FASE 3: Utilidades básicas
+python-decouple==3.8
+django-cleanup==8.0.0
+requests==2.31.0
+
+# FASE 4: Procesamiento de audio (instalar solo si es necesario)
+# librosa==0.10.1
+# pretty_midi==0.2.10
+# basic-pitch==0.3.0
+# spleeter==2.3.2
+# tensorflow==2.13.0
+
+# FASE 5: Científicas básicas
+numpy==1.24.3
+# pandas==2.0.3
+# scipy==1.11.1
