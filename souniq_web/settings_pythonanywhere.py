@@ -23,6 +23,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Third party apps
+    "crispy_forms",
+    "crispy_bootstrap5",
     # Local apps
     "accounts",
     "music_processing", 
@@ -155,3 +158,7 @@ LOGGING = {
 # Configuración de seguridad para producción
 SECURE_SSL_REDIRECT = False  # PythonAnywhere maneja SSL
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Crispy Forms configuration
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
