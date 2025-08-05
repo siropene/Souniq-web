@@ -77,6 +77,7 @@ def process_song_to_stems_sync(song_id):
             try:
                 # Llamar a la API con endpoint específico
                 logger.info("🚀 Enviando archivo a la API de Hugging Face...")
+                logger.info("⏱️ Esto puede tardar 2-3 minutos, por favor espera...")
                 result = client.predict(
                     handle_file(temp_file_path),
                     api_name="/predict"
@@ -133,7 +134,14 @@ def process_song_to_stems_sync(song_id):
                     song.save()
                     
             except Exception as e:
-                logger.error(f"❌ Error en predict(): {e}")
+                # Verificar si es un AppError específico de Gradio
+                error_message = str(e)
+                if "upstream Gradio app has raised an exception" in error_message:
+                    logger.error("❌ Error de la API de Hugging Face: El archivo no pudo ser procesado")
+                    logger.error("💡 Posibles causas: archivo muy corto, formato incorrecto, o problema temporal de la API")
+                else:
+                    logger.error(f"❌ Error en predict(): {e}")
+                
                 import traceback
                 logger.error(f"📋 Traceback predict: {traceback.format_exc()}")
                 song.status = 'error'
