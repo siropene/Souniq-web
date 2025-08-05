@@ -60,12 +60,17 @@ def test_quota_and_limits():
             start_time = time.time()
             
             try:
+                # Usar los mismos parámetros que tu código real
                 result = client.predict(
-                    temp_path,
-                    "Continue",
-                    50,   # Muy pocos tokens
-                    0.7,  # Temperatura moderada
-                    api_name="/predict"
+                    input_midi=temp_path,
+                    num_prime_tokens=900,
+                    num_gen_tokens=50,  # Reducido para ser más rápido
+                    num_mem_tokens=1024,
+                    gen_outro=False,
+                    gen_drums=True,
+                    model_temperature=0.8,
+                    model_sampling_top_p=0.95,
+                    api_name="/generate_callback_wrapper"  # Endpoint correcto
                 )
                 
                 elapsed = time.time() - start_time
