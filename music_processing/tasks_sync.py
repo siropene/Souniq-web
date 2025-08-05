@@ -130,10 +130,22 @@ def process_song_to_stems_sync(song_id):
                     song.save()
                     logger.info("🎉 Stems procesados exitosamente")
                     
+                    return {
+                        'status': 'success',
+                        'message': f'Se procesaron {len(result)} stems exitosamente',
+                        'stems_created': len(result)
+                    }
+                    
                 else:
                     logger.error("❌ No se recibieron suficientes stems de la API")
                     song.status = 'error'
                     song.save()
+                    
+                    return {
+                        'status': 'error',
+                        'message': 'No se recibieron suficientes stems de la API',
+                        'stems_created': 0
+                    }
                     
             except Exception as e:
                 # Verificar si es un AppError específico de Gradio
@@ -148,7 +160,12 @@ def process_song_to_stems_sync(song_id):
                 logger.error(f"📋 Traceback predict: {traceback.format_exc()}")
                 song.status = 'error'
                 song.save()
-                raise
+                
+                return {
+                    'status': 'error',
+                    'message': f'Error en la API: {error_message}',
+                    'stems_created': 0
+                }
                 
             finally:
                 # Limpiar archivo temporal
@@ -165,7 +182,12 @@ def process_song_to_stems_sync(song_id):
             song.save()
         except:
             logger.error("❌ Error adicional al guardar estado")
-        raise
+        
+        return {
+            'status': 'error',
+            'message': f'Error general: {str(e)}',
+            'stems_created': 0
+        }
 
 def convert_stem_to_midi_sync(stem_id):
     """Convertir stem a MIDI de forma síncrona"""
@@ -258,16 +280,30 @@ def convert_stem_to_midi_sync(stem_id):
                     stem.song.save()
                     logger.info("🎉 Conversión completa - todos los stems convertidos")
                 
+                return {
+                    'status': 'success',
+                    'message': f'MIDI generado exitosamente para {stem.stem_type}',
+                    'midi_file_id': midi_file.id
+                }
+                
             else:
                 logger.error("❌ No se recibió archivo MIDI de la API")
                 midi_file.status = 'error'
                 midi_file.save()
                 
+                return {
+                    'status': 'error',
+                    'message': 'No se recibió archivo MIDI de la API'
+                }
+                
         except Exception as e:
             logger.error(f"❌ Error en predict(): {e}")
             midi_file.status = 'error'
             midi_file.save()
-            raise
+            return {
+                'status': 'error',
+                'message': f'Error en la API: {str(e)}'
+            }
             
         finally:
             # Limpiar archivo temporal
@@ -282,7 +318,11 @@ def convert_stem_to_midi_sync(stem_id):
             midi_file.save()
         except:
             logger.error("❌ Error adicional al guardar estado del MIDI")
-        raise
+        
+        return {
+            'status': 'error',
+            'message': f'Error general: {str(e)}'
+        }
 
 def generate_new_track_sync(generated_track_id):
     """Generar nueva canción de forma síncrona con 8 versiones"""
