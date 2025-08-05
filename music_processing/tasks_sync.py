@@ -93,11 +93,17 @@ def process_song_to_stems_sync(song_id):
                     logger.warning("⚠️ Resultado es None o vacío")
                 
                 if result and hasattr(result, '__len__') and len(result) >= 7:
-                    # Limpiar stems existentes para esta canción para evitar duplicados
+                    # PRIMERO: Limpiar stems existentes para esta canción para evitar duplicados
+                    logger.info("🧹 Verificando stems existentes...")
                     existing_stems = Stem.objects.filter(song=song)
                     if existing_stems.exists():
-                        logger.info(f"🧹 Eliminando {existing_stems.count()} stems existentes para la canción...")
+                        logger.info(f"🗑️ Eliminando {existing_stems.count()} stems existentes para la canción...")
                         existing_stems.delete()
+                        logger.info("✅ Stems existentes eliminados")
+                    else:
+                        logger.info("ℹ️ No hay stems existentes para eliminar")
+                    
+                    # SEGUNDO: Procesar nuevos stems
                     
                     # Tipos de stems según la API: vocals, drums, bass, guitar, piano, other, instrumental
                     # Mapear instrumental a strings para que coincida con el modelo

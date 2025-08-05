@@ -18,30 +18,31 @@ django.setup()
 from music_processing.models import Song, Stem
 
 def clean_song_18():
-    """Limpiar stems de la canción ID 18"""
-    print("=== LIMPIEZA CANCIÓN ID 18 ===")
+    """Limpiar stems de la canción ID 18 y 21"""
+    print("=== LIMPIEZA CANCIONES ID 18 y 21 ===")
     
-    try:
-        song = Song.objects.get(id=18)
-        stems = Stem.objects.filter(song=song)
-        
-        print(f"🎵 Canción: {song.title}")
-        print(f"📊 Stems encontrados: {stems.count()}")
-        
-        if stems.exists():
-            for stem in stems:
-                print(f"   - {stem.stem_type} (ID: {stem.id})")
+    for song_id in [18, 21]:
+        try:
+            song = Song.objects.get(id=song_id)
+            stems = Stem.objects.filter(song=song)
             
-            print(f"\n🧹 Eliminando {stems.count()} stems...")
-            stems.delete()
-            print("✅ Stems eliminados exitosamente")
-        else:
-            print("ℹ️ No hay stems para eliminar")
+            print(f"\n🎵 Canción ID {song_id}: {song.title}")
+            print(f"📊 Stems encontrados: {stems.count()}")
             
-    except Song.DoesNotExist:
-        print("❌ Canción ID 18 no encontrada")
-    except Exception as e:
-        print(f"❌ Error: {e}")
+            if stems.exists():
+                for stem in stems:
+                    print(f"   - {stem.stem_type} (ID: {stem.id})")
+                
+                print(f"\n🧹 Eliminando {stems.count()} stems...")
+                stems.delete()
+                print("✅ Stems eliminados exitosamente")
+            else:
+                print("ℹ️ No hay stems para eliminar")
+                
+        except Song.DoesNotExist:
+            print(f"❌ Canción ID {song_id} no encontrada")
+        except Exception as e:
+            print(f"❌ Error con canción {song_id}: {e}")
 
 if __name__ == "__main__":
     clean_song_18()
