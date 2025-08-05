@@ -29,8 +29,19 @@ def process_song_to_stems_sync(song_id):
 
             # Crear cliente de Hugging Face - replicando comportamiento exitoso de local
             logger.info("🔗 Conectando con SouniQ/Modulo1...")
-            client = Client("SouniQ/Modulo1")
-            logger.info("✅ Cliente conectado exitosamente")
+            
+            try:
+                client = Client("SouniQ/Modulo1")
+                logger.info("✅ Cliente conectado exitosamente")
+            except json.JSONDecodeError as json_err:
+                # Este error es esperado en PythonAnywhere pero no impide el funcionamiento
+                logger.warning(f"⚠️ JSONDecodeError esperado (PythonAnywhere): {json_err}")
+                logger.info("🔄 Intentando crear cliente de nuevo...")
+                client = Client("SouniQ/Modulo1")  # Intentar una vez más
+                logger.info("✅ Cliente creado exitosamente a pesar del JSONDecodeError")
+            except Exception as e:
+                logger.error(f"❌ Error crítico conectando con API: {e}")
+                raise e
             
             # Crear archivo temporal
             logger.info("📂 Creando archivo temporal...")
@@ -141,8 +152,19 @@ def convert_stem_to_midi_sync(stem_id):
 
         # Crear cliente de Hugging Face
         logger.info("🔗 Conectando con SouniQ/Modulo2...")
-        client = Client("SouniQ/Modulo2")
-        logger.info("✅ Cliente conectado exitosamente")
+        
+        try:
+            client = Client("SouniQ/Modulo2")
+            logger.info("✅ Cliente conectado exitosamente")
+        except json.JSONDecodeError as json_err:
+            # Este error es esperado en PythonAnywhere pero no impide el funcionamiento
+            logger.warning(f"⚠️ JSONDecodeError esperado (PythonAnywhere): {json_err}")
+            logger.info("🔄 Intentando crear cliente de nuevo...")
+            client = Client("SouniQ/Modulo2")  # Intentar una vez más
+            logger.info("✅ Cliente creado exitosamente a pesar del JSONDecodeError")
+        except Exception as e:
+            logger.error(f"❌ Error crítico conectando con API: {e}")
+            raise e
         
         # Crear archivo temporal
         logger.info("📂 Creando archivo temporal...")
@@ -216,8 +238,19 @@ def generate_new_track_sync(generated_track_id):
 
         # Crear cliente de Hugging Face
         logger.info(f"🔗 Conectando con Giant-Music-Transformer...")
-        client = Client("asigalov61/Giant-Music-Transformer")
-        logger.info(f"✅ Cliente conectado exitosamente")
+        
+        try:
+            client = Client("asigalov61/Giant-Music-Transformer")
+            logger.info(f"✅ Cliente conectado exitosamente")
+        except json.JSONDecodeError as json_err:
+            # Este error es esperado en PythonAnywhere pero no impide el funcionamiento
+            logger.warning(f"⚠️ JSONDecodeError esperado (PythonAnywhere): {json_err}")
+            logger.info("🔄 Intentando crear cliente de nuevo...")
+            client = Client("asigalov61/Giant-Music-Transformer")  # Intentar una vez más
+            logger.info("✅ Cliente creado exitosamente a pesar del JSONDecodeError")
+        except Exception as e:
+            logger.error(f"❌ Error crítico conectando con API (esta API podría no existir): {e}")
+            raise e
         
         # Crear archivo temporal
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mid') as temp_file:
