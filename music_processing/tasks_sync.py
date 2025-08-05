@@ -375,17 +375,39 @@ def generate_new_track_sync(generated_track_id):
             if original_get_api_info:
                 Client._get_api_info = original_get_api_info
         
-        # Crear archivo temporal
+        # Crear archivo temporal y validar MIDI
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mid') as temp_file:
             generated_track.midi_file.file.seek(0)
-            temp_file.write(generated_track.midi_file.file.read())
+            midi_content = generated_track.midi_file.file.read()
+            temp_file.write(midi_content)
             temp_file_path = temp_file.name
         
         logger.info(f"📂 Archivo temporal creado: {temp_file_path}")
+        logger.info(f"📏 Tamaño del archivo MIDI: {len(midi_content)} bytes")
+        logger.info(f"📁 Archivo MIDI origen: {generated_track.midi_file.file.name}")
+        
+        # Validar archivo MIDI
+        if len(midi_content) < 100:
+            logger.error(f"❌ Archivo MIDI muy pequeño: {len(midi_content)} bytes")
+            return {
+                'status': 'error',
+                'message': f'Archivo MIDI muy pequeño ({len(midi_content)} bytes). Debe tener al menos 100 bytes.'
+            }
+        
+        # Verificar header MIDI
+        if not midi_content.startswith(b'MThd'):
+            logger.error("❌ Header MIDI inválido")
+            return {
+                'status': 'error',
+                'message': 'Archivo MIDI no tiene header válido (debe comenzar con MThd)'
+            }
+        
+        logger.info("✅ Archivo MIDI validado correctamente")
 
         try:
             # Llamar a la API
             logger.info("🚀 Enviando MIDI a la API de generación...")
+            logger.info(f"⚙️ Parámetros: gen_outro={generated_track.gen_outro}, temp={generated_track.model_temperature}")
             result = client.predict(
                 input_midi=temp_file_path,
                 num_prime_tokens=generated_track.num_prime_tokens,
@@ -436,13 +458,26 @@ def generate_new_track_sync(generated_track_id):
                 }
                 
         except Exception as e:
-            logger.error(f"❌ Error en predict(): {e}")
+            error_message = str(e)
+            
+            # Manejo específico para errores de la API Giant-Music-Transformer
+            if "upstream Gradio app has raised an exception" in error_message:
+                logger.error("❌ Error de la API Giant-Music-Transformer: El archivo MIDI no pudo ser procesado")
+                logger.error("💡 Posibles causas:")
+                logger.error("   - Archivo MIDI corrupto o formato incorrecto")
+                logger.error("   - MIDI demasiado corto o sin datos musicales válidos")
+                logger.error("   - Problema temporal en la API de Hugging Face")
+                error_msg = "El archivo MIDI no pudo ser procesado por la API de generación"
+            else:
+                logger.error(f"❌ Error en predict(): {e}")
+                error_msg = f"Error en la API: {str(e)}"
+            
             generated_track.status = 'error'
             generated_track.save()
             
             return {
                 'status': 'error',
-                'message': f'Error en la API: {str(e)}',
+                'message': error_msg,
                 'versions_created': 0
             }
             
