@@ -388,13 +388,13 @@ def generate_new_track_sync(generated_track_id):
             logger.info("🚀 Enviando MIDI a la API de generación...")
             result = client.predict(
                 input_midi=temp_file_path,
-                num_prime_tokens=600,
-                num_gen_tokens=600,
-                num_mem_tokens=6990,
-                gen_outro=generated_track.outro_type,
-                gen_drums=False,
-                model_temperature=generated_track.temperature,
-                model_sampling_top_p=0.96,
+                num_prime_tokens=generated_track.num_prime_tokens,
+                num_gen_tokens=generated_track.num_gen_tokens,
+                num_mem_tokens=generated_track.num_mem_tokens,
+                gen_outro=generated_track.gen_outro,
+                gen_drums=generated_track.gen_drums,
+                model_temperature=generated_track.model_temperature,
+                model_sampling_top_p=generated_track.model_sampling_top_p,
                 api_name="/generate_callback_wrapper"
             )
             
