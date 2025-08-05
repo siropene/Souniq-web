@@ -93,18 +93,6 @@ def process_song_to_stems_sync(song_id):
                     logger.warning("⚠️ Resultado es None o vacío")
                 
                 if result and hasattr(result, '__len__') and len(result) >= 7:
-                    # PRIMERO: Limpiar stems existentes para esta canción para evitar duplicados
-                    logger.info("🧹 Verificando stems existentes...")
-                    existing_stems = Stem.objects.filter(song=song)
-                    if existing_stems.exists():
-                        logger.info(f"🗑️ Eliminando {existing_stems.count()} stems existentes para la canción...")
-                        existing_stems.delete()
-                        logger.info("✅ Stems existentes eliminados")
-                    else:
-                        logger.info("ℹ️ No hay stems existentes para eliminar")
-                    
-                    # SEGUNDO: Procesar nuevos stems
-                    
                     # Tipos de stems según la API: vocals, drums, bass, guitar, piano, other, instrumental
                     # Mapear instrumental a strings para que coincida con el modelo
                     api_stem_types = ['vocals', 'drums', 'bass', 'guitar', 'piano', 'other', 'instrumental']
@@ -117,13 +105,21 @@ def process_song_to_stems_sync(song_id):
                             api_type = api_stem_types[i] if i < len(api_stem_types) else f'stem_{i}'
                             model_type = model_stem_types[i] if i < len(model_stem_types) else api_type
                             
-                            # Crear stem en base de datos
-                            stem = Stem.objects.create(
+                            # Crear o obtener stem en base de datos con order correcto
+                            stem, created = Stem.objects.get_or_create(
                                 song=song,
-                                stem_type=model_type
+                                order=i,  # Usar order como parte de la búsqueda
+                                defaults={
+                                    'stem_type': model_type,
+                                }
                             )
                             
-                            # Guardar archivo
+                            if created:
+                                logger.info(f"📝 Nuevo stem {model_type} creado (order={i})")
+                            else:
+                                logger.info(f"♻️ Stem {model_type} ya existe (order={i}), actualizando archivo...")
+                            
+                            # Guardar archivo (siempre, para actualizar si es necesario)
                             filename = f"stem_{model_type}_{song.id}_{stem.id}.wav"
                             with open(stem_file, 'rb') as f:
                                 stem.file.save(filename, ContentFile(f.read()))
