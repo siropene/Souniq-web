@@ -4,6 +4,7 @@ whitenoise==6.5.0
 mysqlclient==2.2.0
 python-decouple==3.8
 django-cleanup==8.0.0
+gradio-client==1.11.0
 librosa==0.10.1
 pretty_midi==0.2.10
 basic-pitch==0.3.0
