@@ -23,7 +23,7 @@ def clean_duplicate_stems():
     print("=== LIMPIEZA DE STEMS DUPLICADOS ===")
     
     # Buscar canciones con stems
-    songs_with_stems = Song.objects.filter(stem__isnull=False).distinct()
+    songs_with_stems = Song.objects.filter(stems__isnull=False).distinct()
     
     for song in songs_with_stems:
         stems = Stem.objects.filter(song=song)
