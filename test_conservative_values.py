@@ -50,16 +50,16 @@ def test_working_values():
         print("🧪 Probando con valores conservadores...")
         
         try:
-            # Valores muy conservadores (como los defaults del espacio)
+            # Valores muy conservadores (argumentos posicionales)
             result = client.predict(
-                input_midi=temp_path,
-                num_prime_tokens=128,   # Valor típico default
-                num_gen_tokens=100,    # Valor bajo
-                num_mem_tokens=512,    # Valor estándar
-                gen_outro=False,
-                gen_drums=False,
-                model_temperature=0.8,
-                model_sampling_top_p=0.9,
+                temp_path,    # input_midi
+                128,          # num_prime_tokens
+                100,          # num_gen_tokens  
+                512,          # num_mem_tokens
+                False,        # gen_outro
+                False,        # gen_drums
+                0.8,          # model_temperature
+                0.9,          # model_sampling_top_p
                 api_name="/generate_callback_wrapper"
             )
             
@@ -71,14 +71,14 @@ def test_working_values():
             # Ahora probar incrementalmente
             print("\n🔄 Probando con valores más altos...")
             result2 = client.predict(
-                input_midi=temp_path,
-                num_prime_tokens=500,   # Incrementar
-                num_gen_tokens=200,    # Incrementar
-                num_mem_tokens=1024,   # Tu valor original
-                gen_outro=False,
-                gen_drums=True,        # Como tu código
-                model_temperature=0.9, # Tu valor
-                model_sampling_top_p=0.95, # Tu valor
+                temp_path,    # input_midi
+                500,          # num_prime_tokens (incrementar)
+                200,          # num_gen_tokens (incrementar)
+                1024,         # num_mem_tokens (tu valor original)
+                False,        # gen_outro
+                True,         # gen_drums (como tu código)
+                0.9,          # model_temperature (tu valor)
+                0.95,         # model_sampling_top_p (tu valor)
                 api_name="/generate_callback_wrapper"
             )
             

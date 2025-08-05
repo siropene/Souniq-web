@@ -421,14 +421,14 @@ def generate_new_track_sync(generated_track_id):
                         time.sleep(retry_delay)
                     
                     result = client.predict(
-                        input_midi=temp_file_path,
-                        num_prime_tokens=generated_track.num_prime_tokens,
-                        num_gen_tokens=generated_track.num_gen_tokens,
-                        num_mem_tokens=generated_track.num_mem_tokens,
-                        gen_outro=generated_track.gen_outro,
-                        gen_drums=generated_track.gen_drums,
-                        model_temperature=generated_track.model_temperature,
-                        model_sampling_top_p=generated_track.model_sampling_top_p,
+                        temp_file_path,  # input_midi como primer argumento posicional
+                        generated_track.num_prime_tokens,
+                        generated_track.num_gen_tokens,
+                        generated_track.num_mem_tokens,
+                        generated_track.gen_outro,
+                        generated_track.gen_drums,
+                        generated_track.model_temperature,
+                        generated_track.model_sampling_top_p,
                         api_name="/generate_callback_wrapper"
                     )
                     
