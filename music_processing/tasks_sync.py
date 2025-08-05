@@ -27,34 +27,10 @@ def process_song_to_stems_sync(song_id):
             song.save()
             logger.info("📊 Estado actualizado a 'processing_stems'")
 
-            # Crear cliente de Hugging Face con manejo robusto de errores
+            # Crear cliente de Hugging Face (enfoque directo que funciona en local)
             logger.info("🔗 Conectando con SouniQ/Modulo1...")
-            client = None
-            max_retries = 3
-            
-            for attempt in range(max_retries):
-                try:
-                    logger.info(f"   Intento {attempt + 1}/{max_retries}")
-                    client = Client("SouniQ/Modulo1")
-                    logger.info("✅ Cliente conectado exitosamente")
-                    break
-                except json.JSONDecodeError as e:
-                    logger.warning(f"   ⚠️ Error JSON en intento {attempt + 1}: {e}")
-                    if attempt < max_retries - 1:
-                        logger.info("   😴 La API puede estar dormida, esperando 30 segundos...")
-                        time.sleep(30)
-                    else:
-                        logger.error("❌ Fallo final: La API SouniQ/Modulo1 no responde correctamente")
-                        raise Exception("API SouniQ/Modulo1 no disponible - posiblemente dormida o con errores")
-                except Exception as e:
-                    logger.error(f"   ❌ Error conectando en intento {attempt + 1}: {e}")
-                    if attempt < max_retries - 1:
-                        time.sleep(15)
-                    else:
-                        raise
-            
-            if client is None:
-                raise Exception("No se pudo establecer conexión con SouniQ/Modulo1")
+            client = Client("SouniQ/Modulo1")
+            logger.info("✅ Cliente conectado exitosamente")
             
             # Crear archivo temporal
             logger.info("📂 Creando archivo temporal...")
