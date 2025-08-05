@@ -418,16 +418,33 @@ def generate_new_track_sync(generated_track_id):
                 generated_track.save()
                 logger.info("🎉 Generación completada exitosamente")
                 
+                return {
+                    'status': 'success',
+                    'message': f'Se generaron {len(result[:8])} versiones exitosamente',
+                    'versions_created': len(result[:8])
+                }
+                
             else:
                 logger.error("❌ No se recibieron suficientes versiones de la API")
                 generated_track.status = 'error'
                 generated_track.save()
                 
+                return {
+                    'status': 'error',
+                    'message': 'No se recibieron suficientes versiones de la API',
+                    'versions_created': 0
+                }
+                
         except Exception as e:
             logger.error(f"❌ Error en predict(): {e}")
             generated_track.status = 'error'
             generated_track.save()
-            raise
+            
+            return {
+                'status': 'error',
+                'message': f'Error en la API: {str(e)}',
+                'versions_created': 0
+            }
             
         finally:
             if os.path.exists(temp_file_path):
@@ -440,4 +457,9 @@ def generate_new_track_sync(generated_track_id):
             generated_track.save()
         except:
             logger.error("❌ Error adicional al guardar estado")
-        raise
+        
+        return {
+            'status': 'error',
+            'message': f'Error general: {str(e)}',
+            'versions_created': 0
+        }
