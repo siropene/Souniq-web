@@ -6,7 +6,7 @@ import json
 import time
 from django.core.files.base import ContentFile
 from django.utils import timezone
-from gradio_client import Client, handle_file
+from gradio_client import Client
 from .models import Song, Stem, MidiFile, GeneratedTrack
 
 logger = logging.getLogger(__name__)
@@ -27,10 +27,42 @@ def process_song_to_stems_sync(song_id):
             song.save()
             logger.info("📊 Estado actualizado a 'processing_stems'")
 
-            # Crear cliente de Hugging Face - JSONDecodeError en /info es esperado pero no crítico
+            # Crear cliente de Hugging Face con patch simplificado
             logger.info("🔗 Conectando con SouniQ/Modulo1...")
-            client = Client("SouniQ/Modulo1")
-            logger.info("✅ Cliente creado (JSONDecodeError en /info es normal)")
+            
+            # Patch simple: solo permitir crear el cliente
+            original_get_api_info = None
+            try:
+                # Guardar método original
+                original_get_api_info = Client._get_api_info
+                
+                # Función de reemplazo simple
+                def patched_get_api_info(self):
+                    try:
+                        return original_get_api_info(self)
+                    except json.JSONDecodeError:
+                        logger.warning("⚠️ JSONDecodeError en _get_api_info - usando estructura mínima")
+                        # Estructura mínima que permite crear el cliente
+                        # predict() funcionará independientemente de esta info
+                        return {
+                            'named_endpoints': {},
+                            'unnamed_endpoints': {}
+                        }
+                
+                # Aplicar patch
+                Client._get_api_info = patched_get_api_info
+                
+                # Crear cliente con patch activo
+                client = Client("SouniQ/Modulo1")
+                logger.info("✅ Cliente creado con patch exitoso")
+                
+            except Exception as e:
+                logger.error(f"❌ Error incluso con patch: {e}")
+                raise
+            finally:
+                # Restaurar método original
+                if original_get_api_info:
+                    Client._get_api_info = original_get_api_info
             
             # Crear archivo temporal
             logger.info("📂 Creando archivo temporal...")
@@ -46,10 +78,12 @@ def process_song_to_stems_sync(song_id):
             try:
                 # Llamar a la API con endpoint específico
                 logger.info("🚀 Enviando archivo a la API de Hugging Face...")
-                result = client.predict(
-                    input_wav_path=handle_file(temp_file_path),
-                    api_name="/predict"
-                )
+                # Intentar sin api_name específico para evitar problemas de cola
+                result = client.predict(temp_file_path)
+                if not result:
+                    # Si falla, intentar con api_name
+                    logger.info("🔄 Reintentando con api_name=/predict...")
+                    result = client.predict(temp_file_path, api_name="/predict")
                 logger.info(f"📥 Resultado recibido: {type(result)}, longitud: {len(result) if result else 'None'}")
                 
                 if result and len(result) >= 7:
@@ -128,10 +162,41 @@ def convert_stem_to_midi_sync(stem_id):
             midi_file.status = 'processing'
             midi_file.save()
 
-        # Crear cliente de Hugging Face - JSONDecodeError en /info es esperado pero no crítico
+        # Crear cliente de Hugging Face con patch para evitar JSONDecodeError
         logger.info("🔗 Conectando con SouniQ/Modulo2...")
-        client = Client("SouniQ/Modulo2")
-        logger.info("✅ Cliente creado (JSONDecodeError en /info es normal)")
+        
+        # Patch temporal: interceptar el método problemático
+        original_get_api_info = None
+        try:
+            # Guardar método original
+            original_get_api_info = Client._get_api_info
+            
+            # Función de reemplazo simple
+            def patched_get_api_info(self):
+                try:
+                    return original_get_api_info(self)
+                except json.JSONDecodeError:
+                    logger.warning("⚠️ JSONDecodeError en _get_api_info - usando estructura mínima")
+                    # Estructura mínima que permite crear el cliente
+                    return {
+                        'named_endpoints': {},
+                        'unnamed_endpoints': {}
+                    }
+            
+            # Aplicar patch
+            Client._get_api_info = patched_get_api_info
+            
+            # Crear cliente con patch activo
+            client = Client("SouniQ/Modulo2")
+            logger.info("✅ Cliente creado con patch exitoso")
+            
+        except Exception as e:
+            logger.error(f"❌ Error incluso con patch: {e}")
+            raise
+        finally:
+            # Restaurar método original
+            if original_get_api_info:
+                Client._get_api_info = original_get_api_info
         
         # Crear archivo temporal
         logger.info("📂 Creando archivo temporal...")
@@ -146,10 +211,10 @@ def convert_stem_to_midi_sync(stem_id):
         try:
             # Llamar a la API con endpoint específico
             logger.info("🚀 Enviando archivo a la API de conversión MIDI...")
-            result = client.predict(
-                input_wav_path=handle_file(temp_file_path),
-                api_name="/predict"
-            )
+            result = client.predict(temp_file_path)
+            if not result:
+                logger.info("🔄 Reintentando MIDI con api_name=/predict...")
+                result = client.predict(temp_file_path, api_name="/predict")
             logger.info(f"📥 Resultado MIDI recibido: {type(result)}")
             
             if result:
@@ -209,10 +274,41 @@ def generate_new_track_sync(generated_track_id):
         generated_track.status = 'processing'
         generated_track.save()
 
-        # Crear cliente de Hugging Face - JSONDecodeError en /info es esperado pero no crítico
+        # Crear cliente de Hugging Face con patch para evitar JSONDecodeError
         logger.info(f"🔗 Conectando con Giant-Music-Transformer...")
-        client = Client("asigalov61/Giant-Music-Transformer")
-        logger.info(f"✅ Cliente creado (JSONDecodeError en /info es normal)")
+        
+        # Patch temporal: interceptar el método problemático
+        original_get_api_info = None
+        try:
+            # Guardar método original
+            original_get_api_info = Client._get_api_info
+            
+            # Función de reemplazo simple
+            def patched_get_api_info(self):
+                try:
+                    return original_get_api_info(self)
+                except json.JSONDecodeError:
+                    logger.warning("⚠️ JSONDecodeError en _get_api_info - usando estructura mínima")
+                    # Estructura mínima que permite crear el cliente
+                    return {
+                        'named_endpoints': {},
+                        'unnamed_endpoints': {}
+                    }
+            
+            # Aplicar patch
+            Client._get_api_info = patched_get_api_info
+            
+            # Crear cliente con patch activo
+            client = Client("asigalov61/Giant-Music-Transformer")
+            logger.info(f"✅ Cliente creado con patch exitoso")
+            
+        except Exception as e:
+            logger.error(f"❌ Error incluso con patch: {e}")
+            raise
+        finally:
+            # Restaurar método original
+            if original_get_api_info:
+                Client._get_api_info = original_get_api_info
         
         # Crear archivo temporal
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mid') as temp_file:
@@ -226,7 +322,7 @@ def generate_new_track_sync(generated_track_id):
             # Llamar a la API
             logger.info("🚀 Enviando MIDI a la API de generación...")
             result = client.predict(
-                input_midi=handle_file(temp_file_path),
+                input_midi=temp_file_path,
                 num_prime_tokens=600,
                 num_gen_tokens=600,
                 num_mem_tokens=6990,
