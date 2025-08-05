@@ -457,30 +457,68 @@ def generate_new_track_sync(generated_track_id):
                         raise
             
             if result and len(result) >= 8:
-                logger.info(f"🎼 Generando {len(result[:8])} versiones...")
+                logger.info(f"🎼 Procesando resultado con {len(result)} elementos...")
+                logger.info(f"📊 Tipo de resultado: {type(result)}")
+                logger.info(f"🔍 Primeros elementos: {[type(item) for item in result[:3]]}")
                 
-                for i, track_file in enumerate(result[:8]):
-                    if track_file:
-                        version = GeneratedVersion.objects.create(
-                            track=generated_track,  # Usar 'track' en lugar de 'generated_track'
-                            version_number=i + 1
-                        )
+                # Procesar hasta 8 versiones
+                versions_saved = 0
+                for i, track_item in enumerate(result[:8]):
+                    if track_item:
+                        logger.info(f"🎵 Procesando versión {i+1}: {type(track_item)}")
                         
-                        filename = f"generated_v{i+1}_{generated_track.id}_{version.id}.mid"
-                        with open(track_file, 'rb') as f:
-                            version.file.save(filename, ContentFile(f.read()))
+                        # La API puede devolver diferentes formatos
+                        track_file_path = None
                         
-                        logger.info(f"✅ Versión {i+1} guardada: {filename}")
+                        if isinstance(track_item, str):
+                            # Es una ruta directa
+                            track_file_path = track_item
+                        elif isinstance(track_item, dict):
+                            # Es un diccionario, extraer la ruta
+                            track_file_path = track_item.get('name') or track_item.get('path') or track_item.get('file')
+                            logger.info(f"🗂️ Diccionario keys: {list(track_item.keys()) if track_item else 'None'}")
+                        elif hasattr(track_item, 'name'):
+                            # Tiene atributo name
+                            track_file_path = track_item.name
+                        
+                        if track_file_path and os.path.exists(track_file_path):
+                            try:
+                                version = GeneratedVersion.objects.create(
+                                    track=generated_track,
+                                    version_number=i + 1
+                                )
+                                
+                                filename = f"generated_v{i+1}_{generated_track.id}_{version.id}.mid"
+                                with open(track_file_path, 'rb') as f:
+                                    version.file.save(filename, ContentFile(f.read()))
+                                
+                                logger.info(f"✅ Versión {i+1} guardada: {filename}")
+                                versions_saved += 1
+                            except Exception as e:
+                                logger.error(f"❌ Error guardando versión {i+1}: {e}")
+                        else:
+                            logger.warning(f"⚠️ No se pudo obtener archivo válido para versión {i+1}: {track_file_path}")
                 
-                generated_track.status = 'completed'
-                generated_track.save()
-                logger.info("🎉 Generación completada exitosamente")
-                
-                return {
-                    'status': 'success',
-                    'message': f'Se generaron {len(result[:8])} versiones exitosamente',
-                    'versions_created': len(result[:8])
-                }
+                if versions_saved > 0:
+                    generated_track.status = 'completed'
+                    generated_track.save()
+                    logger.info(f"🎉 Generación completada: {versions_saved} versiones guardadas")
+                    
+                    return {
+                        'status': 'success',
+                        'message': f'Se generaron {versions_saved} versiones exitosamente',
+                        'versions_created': versions_saved
+                    }
+                else:
+                    logger.error("❌ No se pudieron guardar versiones")
+                    generated_track.status = 'error'
+                    generated_track.save()
+                    
+                    return {
+                        'status': 'error',
+                        'message': 'No se pudieron procesar los archivos de la API',
+                        'versions_created': 0
+                    }
                 
             else:
                 logger.error("❌ No se recibieron suficientes versiones de la API")
