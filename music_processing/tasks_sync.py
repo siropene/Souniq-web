@@ -27,7 +27,7 @@ def process_song_to_stems_sync(song_id):
             song.save()
             logger.info("📊 Estado actualizado a 'processing_stems'")
 
-            # Crear cliente de Hugging Face (enfoque directo que funciona en local)
+            # Crear cliente de Hugging Face - replicando comportamiento exitoso de local
             logger.info("🔗 Conectando con SouniQ/Modulo1...")
             client = Client("SouniQ/Modulo1")
             logger.info("✅ Cliente conectado exitosamente")
