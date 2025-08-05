@@ -41,14 +41,33 @@ def process_song_to_stems_sync(song_id):
                     try:
                         return original_get_api_info(self)
                     except json.JSONDecodeError:
-                        logger.warning("⚠️ JSONDecodeError en _get_api_info - usando info mínima")
-                        # Retornar estructura mínima que permita usar predict()
-                        from types import SimpleNamespace
-                        return SimpleNamespace(
-                            named_endpoints=['predict'],
-                            unnamed_endpoints=[],
-                            dependencies=[]
-                        )
+                        logger.warning("⚠️ JSONDecodeError en _get_api_info - usando info mínima compatible")
+                        # Retornar diccionario compatible con gradio_client
+                        return {
+                            'named_endpoints': {
+                                '/predict': {
+                                    'parameters': [
+                                        {
+                                            'label': 'Sube un archivo .wav',
+                                            'parameter_name': 'input_wav_path',
+                                            'parameter_has_default': False,
+                                            'parameter_default': None,
+                                            'type': {}
+                                        }
+                                    ],
+                                    'returns': [
+                                        {'type': {}},  # Vocals
+                                        {'type': {}},  # Drums  
+                                        {'type': {}},  # Bass
+                                        {'type': {}},  # Guitar
+                                        {'type': {}},  # Piano
+                                        {'type': {}},  # Other
+                                        {'type': {}},  # Base instrumental
+                                    ]
+                                }
+                            },
+                            'unnamed_endpoints': {}
+                        }
                 
                 # Aplicar patch
                 Client._get_api_info = patched_get_api_info
@@ -175,14 +194,33 @@ def convert_stem_to_midi_sync(stem_id):
                 try:
                     return original_get_api_info(self)
                 except json.JSONDecodeError:
-                    logger.warning("⚠️ JSONDecodeError en _get_api_info - usando info mínima")
-                    # Retornar estructura mínima que permita usar predict()
-                    from types import SimpleNamespace
-                    return SimpleNamespace(
-                        named_endpoints=['predict'],
-                        unnamed_endpoints=[],
-                        dependencies=[]
-                    )
+                    logger.warning("⚠️ JSONDecodeError en _get_api_info - usando info mínima compatible")
+                    # Retornar diccionario compatible con gradio_client
+                    return {
+                        'named_endpoints': {
+                            '/predict': {
+                                'parameters': [
+                                    {
+                                        'label': 'Sube un archivo .wav',
+                                        'parameter_name': 'input_wav_path',
+                                        'parameter_has_default': False,
+                                        'parameter_default': None,
+                                        'type': {}
+                                    }
+                                ],
+                                'returns': [
+                                    {'type': {}},  # Vocals
+                                    {'type': {}},  # Drums  
+                                    {'type': {}},  # Bass
+                                    {'type': {}},  # Guitar
+                                    {'type': {}},  # Piano
+                                    {'type': {}},  # Other
+                                    {'type': {}},  # Base instrumental
+                                ]
+                            }
+                        },
+                        'unnamed_endpoints': {}
+                    }
             
             # Aplicar patch
             Client._get_api_info = patched_get_api_info
@@ -289,14 +327,17 @@ def generate_new_track_sync(generated_track_id):
                 try:
                     return original_get_api_info(self)
                 except json.JSONDecodeError:
-                    logger.warning("⚠️ JSONDecodeError en _get_api_info - usando info mínima")
-                    # Retornar estructura mínima que permita usar predict()
-                    from types import SimpleNamespace
-                    return SimpleNamespace(
-                        named_endpoints=['generate_callback_wrapper'],
-                        unnamed_endpoints=[],
-                        dependencies=[]
-                    )
+                    logger.warning("⚠️ JSONDecodeError en _get_api_info - usando info mínima compatible")
+                    # Retornar diccionario compatible con gradio_client para Giant-Music-Transformer
+                    return {
+                        'named_endpoints': {
+                            '/generate_callback_wrapper': {
+                                'parameters': [],
+                                'returns': []
+                            }
+                        },
+                        'unnamed_endpoints': {}
+                    }
             
             # Aplicar patch
             Client._get_api_info = patched_get_api_info

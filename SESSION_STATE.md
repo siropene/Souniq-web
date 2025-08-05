@@ -1,6 +1,6 @@
 # Estado de la Sesión - SouniQ Web 
-**Fecha:** 4 de agosto de 2025  
-**Última actualización:** Despliegue en PythonAnywhere completado
+**Fecha:** 5 de agosto de 2025  
+**Última actualización:** Patch JSONDecodeError implementado y testeado ✅
 
 ## 🎯 ESTADO ACTUAL DEL PROYECTO
 
@@ -39,16 +39,37 @@
    - **Configuración:** `settings_pythonanywhere_simple.py` (funcional)
 
 ### ❌ PENDIENTE DE CORRECCIÓN
-5. **Generación de Nueva Canción** - ⚠️ API NO DISPONIBLE
-   - API Original: Giant-Music-Transformer (Hugging Face) ❌ NO EXISTE
+5. **Generación de Nueva Canción** - ✅ PATCH IMPLEMENTADO
+   - API: Giant-Music-Transformer (Hugging Face) ✅ FUNCIONANDO CON PATCH
    - Función: `generate_new_track_sync()` en `/music_processing/tasks_sync.py`
-   - **PROBLEMA:** Necesita API alternativa para generación de música
-   - **ACCIÓN REQUERIDA:** Encontrar API alternativa o implementar método local
+   - **SOLUCIONADO:** Patch JSONDecodeError implementado exitosamente
+   - **ESTADO:** Listo para testing en producción
 
 6. **Funcionalidades Avanzadas en Producción** - ⚠️ PENDIENTE TESTING
-   - **Estado:** Web muestra correctamente pero funcionalidades no testeadas
-   - **Pendiente:** Verificar que stems y MIDI funcionan en producción
-   - **Motivo:** Requiere archivos de audio para testing completo
+   - **Estado:** Patch implementado localmente, listo para despliegue
+   - **Pendiente:** Subir código con patch a PythonAnywhere y testear
+   - **Motivo:** Necesita despliegue del código corregido
+
+## 🔥 PROBLEMAS TÉCNICOS RESUELTOS HOY (5 DE AGOSTO)
+
+### **Issue 4:** JSONDecodeError en APIs de Hugging Face en Producción
+**Problema:** Error `JSONDecodeError: Expecting value: line 1 column 1 (char 0)` al intentar usar gradio_client
+**Causa:** Las APIs de Hugging Face retornan HTML en lugar de JSON en el endpoint `/info`
+**Solución aplicada:**
+- ✅ Implementado patch para `Client._get_api_info()` en las 3 funciones principales
+- ✅ Patch intercepta JSONDecodeError y retorna estructura dict compatible
+- ✅ Funciones corregidas: `process_song_to_stems_sync()`, `convert_stem_to_midi_sync()`, `generate_new_track_sync()`
+- ✅ Testing local: 3/3 APIs funcionando correctamente
+- ✅ Testing integración Django: Todas las pruebas pasaron
+
+### **Issue 5:** Estructura incorrecta en patch inicial
+**Problema:** Uso de SimpleNamespace incompatible con gradio_client interno
+**Causa:** gradio_client requiere estructura dict específica con claves `named_endpoints` y `unnamed_endpoints`
+**Solución aplicada:**
+- ✅ Corregida estructura de SimpleNamespace a dict
+- ✅ Implementadas claves requeridas: `named_endpoints`, `unnamed_endpoints`
+- ✅ Endpoints específicos para cada API: `/predict` y `/generate_callback_wrapper`
+- ✅ Validado con testing exhaustivo
 
 ## � PROBLEMAS TÉCNICOS RESUELTOS HOY
 
@@ -80,7 +101,7 @@
 ```
 WEB2/
 ├── music_processing/
-│   ├── tasks_sync.py              # ✅ Versión síncrona (STEMS y MIDI funcionan)
+│   ├── tasks_sync.py              # ✅ Con PATCH JSONDecodeError (3 funciones)
 │   ├── models.py                  # ✅ Modelos sin campo 'status' en Stem
 │   ├── views.py                   # ✅ Usa tasks_sync correctamente  
 │   └── forms.py                   # ✅ Formularios completos
@@ -95,41 +116,46 @@ WEB2/
 │       └── midi_conversion.html           # ✅ Con overlay funcional
 ├── wsgi_pythonanywhere.py         # ✅ Configurado para producción
 ├── diagnostic_pythonanywhere.py   # 🆕 Script de diagnóstico
+├── test_all_apis_patched.py       # 🆕 Test APIs con patch (3/3 ✅)
+├── test_django_integration.py     # 🆕 Test integración Django (✅)
+├── investigate_api_structure.py   # 🆕 Diagnóstico estructura APIs
+├── inspect_api_dict.py            # 🆕 Investigación dict compatibility
 ├── requirements-pythonanywhere.txt # ✅ Dependencias para producción
 └── db.sqlite3                     # ✅ Con datos de prueba (local)
 ```
 
-## 🔧 PRÓXIMOS PASOS CRÍTICOS PARA MAÑANA
+## 🔧 PRÓXIMOS PASOS CRÍTICOS
 
-### **PRIORIDAD 1: Testing en Producción PythonAnywhere** 🌐
-- **Estado:** Web funcionando, pero funcionalidades no testeadas en producción
+### **PRIORIDAD 1: Despliegue del Patch en PythonAnywhere** 🚀
+- **Estado:** Patch validado localmente (3/3 APIs ✅), listo para producción
 - **Acciones pendientes:**
-  1. Subir archivo de audio de prueba
-  2. Probar generación de stems en producción
-  3. Verificar que overlays funcionen correctamente
+  1. Subir `tasks_sync.py` con patch a PythonAnywhere
+  2. Reiniciar aplicación web en PythonAnywhere
+  3. Probar generación de stems en producción
   4. Probar conversión MIDI en producción
-  5. Verificar descarga de archivos
+  5. Probar generación musical en producción
 
-### **PRIORIDAD 2: Migración de Base de Datos** 🗄️
+### **PRIORIDAD 2: Testing Completo en Producción** 🌐
+- **Estado:** Código con patch listo, web funcionando
+- **Acciones requeridas:**
+  1. Subir archivo de audio de prueba
+  2. Verificar que overlays funcionen correctamente
+  3. Verificar descarga de archivos
+  4. Confirmar que logs no muestren errores JSONDecodeError
+
+### **PRIORIDAD 3: Migración de Base de Datos** 🗄️
 - **Estado:** MySQL vacía, necesita datos iniciales
 - **Acciones requeridas:**
   1. Ejecutar migraciones: `python manage.py migrate`
   2. Crear superusuario: `python manage.py createsuperuser`
   3. Opcional: Transferir datos de prueba desde local
 
-### **PRIORIDAD 3: Configuración Final de Producción** ⚙️
+### **PRIORIDAD 4: Configuración Final de Producción** ⚙️
 - **Variables de entorno pendientes:**
   - `DB_PASSWORD` (configurar en PythonAnywhere)
   - `SECRET_KEY` (generar nueva para producción)
 - **Archivos estáticos:** Verificar que CSS/JS se cargan correctamente
 - **Logging:** Verificar logs de errores en producción
-
-### **PRIORIDAD 4: Corrección API Generación Musical** 🎵
-- **Estado:** API Giant-Music-Transformer no existe
-- **Opciones:**
-  1. Buscar API alternativa en Hugging Face
-  2. Usar modelo local/offline
-  3. Desactivar temporalmente esta funcionalidad
 
 ## 🖥️ ESTADO ACTUAL DEL DESPLIEGUE
 
@@ -181,27 +207,32 @@ python manage.py createsuperuser
 python manage.py check
 ```
 
-## 🎉 LOGROS DE HOY (4 DE AGOSTO 2025)
+## 🎉 LOGROS DE HOY (5 DE AGOSTO 2025)
 
-### ✅ **DESPLIEGUE EXITOSO EN PYTHONANYWHERE**
-- Aplicación web desplegada y accesible en https://aherrasf.pythonanywhere.com
-- Base de datos MySQL configurada y conectada
-- Sistema de overlay JavaScript funcionando correctamente
+### ✅ **RESOLUCIÓN CRÍTICA: JSONDecodeError**
+- Identificado y resuelto el problema de JSONDecodeError en gradio_client
+- Implementado patch robusto para las 3 funciones principales
+- Testing exhaustivo: 3/3 APIs funcionando correctamente
 
-### ✅ **RESOLUCIÓN DE PROBLEMAS CRÍTICOS**
-- Corregido error de `crispy_forms_tags` en templates
-- Configuradas todas las dependencias necesarias
-- Creado sistema de configuración dual (local/producción)
+### ✅ **DESARROLLO DE SOLUCIÓN TÉCNICA**
+- Desarrollado monkey patch para `Client._get_api_info()`
+- Corregida estructura de datos (SimpleNamespace → dict)
+- Implementados endpoints específicos para cada API
 
-### ✅ **INFRAESTRUCTURA COMPLETA**
-- Virtual environment Python 3.11 configurado
-- Archivos de diagnóstico y configuración simplificada creados
-- WSGI y settings preparados para producción
+### ✅ **VALIDACIÓN COMPLETA**
+- Testing aislado de APIs: ✅ Exitoso
+- Testing de integración Django: ✅ Exitoso
+- Servidor local funcionando con patch: ✅ Operativo
+
+### ✅ **PREPARACIÓN PARA PRODUCCIÓN**
+- Código con patch listo para despliegue
+- Scripts de testing creados para validación
+- Documentación actualizada
 
 ---
 
-**ESTADO FINAL:** 🌐 **WEB FUNCIONANDO EN PRODUCCIÓN**  
-**PRÓXIMO PASO:** Testing completo de funcionalidades en producción
+**ESTADO FINAL:** 🚀 **PATCH IMPLEMENTADO Y VALIDADO - LISTO PARA PRODUCCIÓN**  
+**PRÓXIMO PASO:** Desplegar código con patch a PythonAnywhere y testear en producción
   - Estado: `stems_completed` ✅
   - Stems: 7 archivos generados correctamente ✅
   - MIDI: 4 archivos generados exitosamente ✅

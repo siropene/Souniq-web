@@ -6,7 +6,6 @@ Ejecutar: python test_all_apis_patched.py
 import os
 import sys
 import json
-from types import SimpleNamespace
 
 # Configurar ruta para PythonAnywhere
 path = '/home/aherrasf/Souniq-web'
@@ -31,12 +30,39 @@ def test_api_with_patch(space_name, endpoint_name="predict"):
                 return original_get_api_info(self)
             except json.JSONDecodeError:
                 print(f"⚠️ JSONDecodeError capturado para {space_name}")
-                # Retornar estructura mínima
-                return SimpleNamespace(
-                    named_endpoints=[endpoint_name],
-                    unnamed_endpoints=[],
-                    dependencies=[]
-                )
+                # Retornar diccionario compatible con gradio_client
+                if endpoint_name == "generate_callback_wrapper":
+                    # Para Giant-Music-Transformer
+                    return {
+                        'named_endpoints': {
+                            f'/{endpoint_name}': {
+                                'parameters': [],
+                                'returns': []
+                            }
+                        },
+                        'unnamed_endpoints': {}
+                    }
+                else:
+                    # Para SouniQ/Modulo1 y SouniQ/Modulo2
+                    return {
+                        'named_endpoints': {
+                            f'/{endpoint_name}': {
+                                'parameters': [
+                                    {
+                                        'label': 'Sube un archivo .wav',
+                                        'parameter_name': 'input_wav_path',
+                                        'parameter_has_default': False,
+                                        'parameter_default': None,
+                                        'type': {}
+                                    }
+                                ],
+                                'returns': [
+                                    {'type': {}}
+                                ]
+                            }
+                        },
+                        'unnamed_endpoints': {}
+                    }
         
         # Aplicar patch
         Client._get_api_info = patched_get_api_info
