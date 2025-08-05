@@ -27,10 +27,43 @@ def process_song_to_stems_sync(song_id):
             song.save()
             logger.info("📊 Estado actualizado a 'processing_stems'")
 
-            # Crear cliente de Hugging Face - JSONDecodeError en /info es esperado pero no crítico
+            # Crear cliente de Hugging Face con patch para evitar JSONDecodeError
             logger.info("🔗 Conectando con SouniQ/Modulo1...")
-            client = Client("SouniQ/Modulo1")
-            logger.info("✅ Cliente creado (JSONDecodeError en /info es normal)")
+            
+            # Patch temporal: interceptar el método problemático
+            original_get_api_info = None
+            try:
+                # Guardar método original
+                original_get_api_info = Client._get_api_info
+                
+                # Función de reemplazo que no falla con JSONDecodeError
+                def patched_get_api_info(self):
+                    try:
+                        return original_get_api_info(self)
+                    except json.JSONDecodeError:
+                        logger.warning("⚠️ JSONDecodeError en _get_api_info - usando info mínima")
+                        # Retornar estructura mínima que permita usar predict()
+                        from types import SimpleNamespace
+                        return SimpleNamespace(
+                            named_endpoints=['predict'],
+                            unnamed_endpoints=[],
+                            dependencies=[]
+                        )
+                
+                # Aplicar patch
+                Client._get_api_info = patched_get_api_info
+                
+                # Crear cliente con patch activo
+                client = Client("SouniQ/Modulo1")
+                logger.info("✅ Cliente creado con patch exitoso")
+                
+            except Exception as e:
+                logger.error(f"❌ Error incluso con patch: {e}")
+                raise
+            finally:
+                # Restaurar método original
+                if original_get_api_info:
+                    Client._get_api_info = original_get_api_info
             
             # Crear archivo temporal
             logger.info("📂 Creando archivo temporal...")
@@ -128,10 +161,43 @@ def convert_stem_to_midi_sync(stem_id):
             midi_file.status = 'processing'
             midi_file.save()
 
-        # Crear cliente de Hugging Face - JSONDecodeError en /info es esperado pero no crítico
+        # Crear cliente de Hugging Face con patch para evitar JSONDecodeError
         logger.info("🔗 Conectando con SouniQ/Modulo2...")
-        client = Client("SouniQ/Modulo2")
-        logger.info("✅ Cliente creado (JSONDecodeError en /info es normal)")
+        
+        # Patch temporal: interceptar el método problemático
+        original_get_api_info = None
+        try:
+            # Guardar método original
+            original_get_api_info = Client._get_api_info
+            
+            # Función de reemplazo que no falla con JSONDecodeError
+            def patched_get_api_info(self):
+                try:
+                    return original_get_api_info(self)
+                except json.JSONDecodeError:
+                    logger.warning("⚠️ JSONDecodeError en _get_api_info - usando info mínima")
+                    # Retornar estructura mínima que permita usar predict()
+                    from types import SimpleNamespace
+                    return SimpleNamespace(
+                        named_endpoints=['predict'],
+                        unnamed_endpoints=[],
+                        dependencies=[]
+                    )
+            
+            # Aplicar patch
+            Client._get_api_info = patched_get_api_info
+            
+            # Crear cliente con patch activo
+            client = Client("SouniQ/Modulo2")
+            logger.info("✅ Cliente creado con patch exitoso")
+            
+        except Exception as e:
+            logger.error(f"❌ Error incluso con patch: {e}")
+            raise
+        finally:
+            # Restaurar método original
+            if original_get_api_info:
+                Client._get_api_info = original_get_api_info
         
         # Crear archivo temporal
         logger.info("📂 Creando archivo temporal...")
@@ -209,10 +275,43 @@ def generate_new_track_sync(generated_track_id):
         generated_track.status = 'processing'
         generated_track.save()
 
-        # Crear cliente de Hugging Face - JSONDecodeError en /info es esperado pero no crítico
+        # Crear cliente de Hugging Face con patch para evitar JSONDecodeError
         logger.info(f"🔗 Conectando con Giant-Music-Transformer...")
-        client = Client("asigalov61/Giant-Music-Transformer")
-        logger.info(f"✅ Cliente creado (JSONDecodeError en /info es normal)")
+        
+        # Patch temporal: interceptar el método problemático
+        original_get_api_info = None
+        try:
+            # Guardar método original
+            original_get_api_info = Client._get_api_info
+            
+            # Función de reemplazo que no falla con JSONDecodeError
+            def patched_get_api_info(self):
+                try:
+                    return original_get_api_info(self)
+                except json.JSONDecodeError:
+                    logger.warning("⚠️ JSONDecodeError en _get_api_info - usando info mínima")
+                    # Retornar estructura mínima que permita usar predict()
+                    from types import SimpleNamespace
+                    return SimpleNamespace(
+                        named_endpoints=['generate_callback_wrapper'],
+                        unnamed_endpoints=[],
+                        dependencies=[]
+                    )
+            
+            # Aplicar patch
+            Client._get_api_info = patched_get_api_info
+            
+            # Crear cliente con patch activo
+            client = Client("asigalov61/Giant-Music-Transformer")
+            logger.info(f"✅ Cliente creado con patch exitoso")
+            
+        except Exception as e:
+            logger.error(f"❌ Error incluso con patch: {e}")
+            raise
+        finally:
+            # Restaurar método original
+            if original_get_api_info:
+                Client._get_api_info = original_get_api_info
         
         # Crear archivo temporal
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mid') as temp_file:
