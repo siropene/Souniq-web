@@ -405,20 +405,56 @@ def generate_new_track_sync(generated_track_id):
         logger.info("✅ Archivo MIDI validado correctamente")
 
         try:
-            # Llamar a la API
+            # Llamar a la API con reintentos automáticos
             logger.info("🚀 Enviando MIDI a la API de generación...")
             logger.info(f"⚙️ Parámetros: gen_outro={generated_track.gen_outro}, temp={generated_track.model_temperature}")
-            result = client.predict(
-                input_midi=temp_file_path,
-                num_prime_tokens=generated_track.num_prime_tokens,
-                num_gen_tokens=generated_track.num_gen_tokens,
-                num_mem_tokens=generated_track.num_mem_tokens,
-                gen_outro=generated_track.gen_outro,
-                gen_drums=generated_track.gen_drums,
-                model_temperature=generated_track.model_temperature,
-                model_sampling_top_p=generated_track.model_sampling_top_p,
-                api_name="/generate_callback_wrapper"
-            )
+            
+            # Implementar reintentos para errores temporales
+            max_retries = 3
+            retry_delay = 30  # segundos
+            
+            for attempt in range(max_retries):
+                try:
+                    if attempt > 0:
+                        logger.info(f"🔄 Intento {attempt + 1}/{max_retries} después de esperar {retry_delay}s...")
+                        import time
+                        time.sleep(retry_delay)
+                    
+                    result = client.predict(
+                        input_midi=temp_file_path,
+                        num_prime_tokens=generated_track.num_prime_tokens,
+                        num_gen_tokens=generated_track.num_gen_tokens,
+                        num_mem_tokens=generated_track.num_mem_tokens,
+                        gen_outro=generated_track.gen_outro,
+                        gen_drums=generated_track.gen_drums,
+                        model_temperature=generated_track.model_temperature,
+                        model_sampling_top_p=generated_track.model_sampling_top_p,
+                        api_name="/generate_callback_wrapper"
+                    )
+                    
+                    # Si llegamos aquí, la API funcionó
+                    logger.info(f"✅ API respondió exitosamente en intento {attempt + 1}")
+                    break
+                    
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    
+                    # Solo reintentar para errores temporales
+                    if ("upstream gradio app has raised an exception" in error_msg or 
+                        "timeout" in error_msg or 
+                        "connection" in error_msg):
+                        
+                        if attempt < max_retries - 1:
+                            logger.warning(f"⚠️ Error temporal en intento {attempt + 1}: {str(e)[:100]}...")
+                            logger.info(f"🔄 Reintentando en {retry_delay} segundos...")
+                            continue
+                        else:
+                            logger.error(f"❌ Error persistente después de {max_retries} intentos")
+                            raise
+                    else:
+                        # Error no temporal, no reintentar
+                        logger.error(f"❌ Error no temporal: {str(e)[:100]}...")
+                        raise
             
             if result and len(result) >= 8:
                 logger.info(f"🎼 Generando {len(result[:8])} versiones...")
