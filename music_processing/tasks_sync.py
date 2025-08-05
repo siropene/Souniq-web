@@ -81,9 +81,17 @@ def process_song_to_stems_sync(song_id):
                     handle_file(temp_file_path),
                     api_name="/predict"
                 )
-                logger.info(f"📥 Resultado recibido: {type(result)}, longitud: {len(result) if result else 'None'}")
+                logger.info(f"📥 Resultado recibido: {type(result)}")
                 
-                if result and len(result) >= 7:
+                if result:
+                    logger.info(f"📊 Longitud del resultado: {len(result) if hasattr(result, '__len__') else 'No tiene longitud'}")
+                    if hasattr(result, '__len__') and len(result) > 0:
+                        for i, item in enumerate(result[:3]):  # Solo primeros 3 para no saturar logs
+                            logger.info(f"   Item {i}: {type(item)} - {str(item)[:100] if item else 'None'}")
+                else:
+                    logger.warning("⚠️ Resultado es None o vacío")
+                
+                if result and hasattr(result, '__len__') and len(result) >= 7:
                     # Limpiar stems existentes para esta canción para evitar duplicados
                     existing_stems = Stem.objects.filter(song=song)
                     if existing_stems.exists():
@@ -126,6 +134,8 @@ def process_song_to_stems_sync(song_id):
                     
             except Exception as e:
                 logger.error(f"❌ Error en predict(): {e}")
+                import traceback
+                logger.error(f"📋 Traceback predict: {traceback.format_exc()}")
                 song.status = 'error'
                 song.save()
                 raise
@@ -138,6 +148,8 @@ def process_song_to_stems_sync(song_id):
                     
     except Exception as e:
         logger.error(f"❌ Error general en process_song_to_stems_sync: {e}")
+        import traceback
+        logger.error(f"📋 Traceback completo: {traceback.format_exc()}")
         try:
             song.status = 'error'
             song.save()
