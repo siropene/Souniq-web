@@ -462,7 +462,7 @@ def generate_new_track_sync(generated_track_id):
                 for i, track_file in enumerate(result[:8]):
                     if track_file:
                         version = GeneratedVersion.objects.create(
-                            generated_track=generated_track,
+                            track=generated_track,  # Usar 'track' en lugar de 'generated_track'
                             version_number=i + 1
                         )
                         
