@@ -253,7 +253,7 @@ def convert_stem_to_midi_sync(stem_id):
                 logger.info(f"✅ MIDI guardado: {filename}")
                 
                 # Actualizar estado de la canción si todos los stems tienen MIDI
-                if stem.song.stems.filter(midi_files__status='completed').count() >= stem.song.stems.count():
+                if stem.song.stems.filter(midi_file__status='completed').count() >= stem.song.stems.count():
                     stem.song.status = 'completed'
                     stem.song.save()
                     logger.info("🎉 Conversión completa - todos los stems convertidos")
