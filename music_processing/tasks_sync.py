@@ -340,7 +340,7 @@ def generate_new_track_sync(generated_track_id):
         generated_track.save()
 
         # Crear cliente de Hugging Face con patch para evitar JSONDecodeError
-        logger.info(f"🔗 Conectando con Giant-Music-Transformer...")
+        logger.info(f"🔗 Conectando con Orpheus-Music-Transformer...")
         
         # Patch temporal: interceptar el método problemático
         original_get_api_info = None
@@ -364,7 +364,7 @@ def generate_new_track_sync(generated_track_id):
             Client._get_api_info = patched_get_api_info
             
             # Crear cliente con patch activo
-            client = Client("asigalov61/Giant-Music-Transformer")
+            client = Client("asigalov61/Orpheus-Music-Transformer")
             logger.info(f"✅ Cliente creado con patch exitoso")
             
         except Exception as e:
@@ -407,7 +407,7 @@ def generate_new_track_sync(generated_track_id):
         try:
             # Llamar a la API con reintentos automáticos
             logger.info("🚀 Enviando MIDI a la API de generación...")
-            logger.info(f"⚙️ Parámetros: gen_outro={generated_track.gen_outro}, temp={generated_track.model_temperature}")
+            logger.info(f"⚙️ Parámetros: add_outro={generated_track.add_outro}, temp={generated_track.model_temperature}")
             
             # Implementar reintentos para errores temporales
             max_retries = 3
@@ -421,15 +421,18 @@ def generate_new_track_sync(generated_track_id):
                         time.sleep(retry_delay)
                     
                     result = client.predict(
-                        handle_file(temp_file_path),  # input_midi como primer argumento posicional con handle_file
-                        generated_track.num_prime_tokens,
-                        generated_track.num_gen_tokens,
-                        generated_track.num_mem_tokens,
-                        "Auto" if generated_track.gen_outro else "Disable",  # gen_outro como string
-                        generated_track.gen_drums,
-                        generated_track.model_temperature,
-                        generated_track.model_sampling_top_p,
-                        api_name="/generate_callback_wrapper"
+                        input_midi=handle_file(temp_file_path),
+                        apply_sustains=generated_track.apply_sustains,
+                        remove_duplicate_pitches=generated_track.remove_duplicate_pitches,
+                        remove_overlapping_durations=generated_track.remove_overlapping_durations,
+                        prime_instruments=generated_track.prime_instruments,
+                        num_prime_tokens=generated_track.num_prime_tokens,
+                        num_gen_tokens=generated_track.num_gen_tokens,
+                        model_temperature=generated_track.model_temperature,
+                        model_top_p=generated_track.model_top_p,
+                        add_drums=generated_track.add_drums,
+                        add_outro=generated_track.add_outro,
+                        api_name="/generate_music_and_state"
                     )
                     
                     # Si llegamos aquí, la API funcionó
@@ -534,9 +537,9 @@ def generate_new_track_sync(generated_track_id):
         except Exception as e:
             error_message = str(e)
             
-            # Manejo específico para errores de la API Giant-Music-Transformer
+            # Manejo específico para errores de la API Orpheus-Music-Transformer
             if "upstream Gradio app has raised an exception" in error_message:
-                logger.error("❌ Error de la API Giant-Music-Transformer: El archivo MIDI no pudo ser procesado")
+                logger.error("❌ Error de la API Orpheus-Music-Transformer: El archivo MIDI no pudo ser procesado")
                 logger.error("💡 Posibles causas:")
                 logger.error("   - Archivo MIDI corrupto o formato incorrecto")
                 logger.error("   - MIDI demasiado corto o sin datos musicales válidos")

@@ -95,20 +95,23 @@ class GeneratedTrack(models.Model):
     midi_file = models.ForeignKey(MidiFile, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     
-    # Parámetros de generación
-    
-    OUTRO_CHOICES = [
-        ('Auto', 'Automático'),
-        ('Force', 'Forzar'),
-        ('Disable', 'Desactivar'),
-    ]
-    
-    num_prime_tokens = models.IntegerField(default=600)
-    num_gen_tokens = models.IntegerField(default=600)
-    num_mem_tokens = models.IntegerField(default=6990)
-    gen_outro = models.CharField(max_length=20, choices=OUTRO_CHOICES, default="Auto")
-    gen_drums = models.BooleanField(default=False)
+    # Parámetros de generación para Orpheus-Music-Transformer
+    apply_sustains = models.BooleanField(default=True)
+    remove_duplicate_pitches = models.BooleanField(default=True)
+    remove_overlapping_durations = models.BooleanField(default=True)
+    # prime_instruments será un campo JSON para la lista
+    prime_instruments_json = models.JSONField(default=list, blank=True)
+    num_prime_tokens = models.IntegerField(default=6656)
+    num_gen_tokens = models.IntegerField(default=512)
     model_temperature = models.FloatField(default=0.9)
+    model_top_p = models.FloatField(default=0.96)
+    add_drums = models.BooleanField(default=False)
+    add_outro = models.BooleanField(default=False)
+    
+    # Campos legacy mantenidos para compatibilidad (no usados en Orpheus)
+    num_mem_tokens = models.IntegerField(default=6990)
+    gen_outro = models.CharField(max_length=20, default="Auto")
+    gen_drums = models.BooleanField(default=False)
     model_sampling_top_p = models.FloatField(default=0.96)
     
     # Archivos resultado - deprecated, ahora usar GeneratedVersion
@@ -133,6 +136,16 @@ class GeneratedTrack(models.Model):
     def has_completed_versions(self):
         """Retorna True si tiene versiones completadas"""
         return self.generated_versions.filter(file__isnull=False).exists()
+    
+    @property
+    def prime_instruments(self):
+        """Getter para prime_instruments como lista"""
+        return self.prime_instruments_json or []
+    
+    @prime_instruments.setter
+    def prime_instruments(self, value):
+        """Setter para prime_instruments"""
+        self.prime_instruments_json = value or []
 
 
 class GeneratedVersion(models.Model):
