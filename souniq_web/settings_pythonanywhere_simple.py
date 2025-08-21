@@ -126,3 +126,13 @@ LOGGING = {
         },
     },
 }
+
+# Email Configuration for PythonAnywhere FREE accounts
+# PythonAnywhere free accounts don't support external SMTP
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = None
+EMAIL_PORT = None
+EMAIL_USE_TLS = False
+EMAIL_HOST_USER = None
+EMAIL_HOST_PASSWORD = None
+DEFAULT_FROM_EMAIL = 'noreply@souniq.com'
