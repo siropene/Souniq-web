@@ -165,10 +165,17 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # Email Configuration for PythonAnywhere
 # PythonAnywhere free accounts don't support external SMTP
-# Use console backend for development/testing
+# FORCE console backend for all email operations
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# For production with PythonAnywhere paid account, uncomment and configure:
+# Ensure no SMTP configuration is used
+EMAIL_HOST = None
+EMAIL_PORT = None
+EMAIL_USE_TLS = False
+EMAIL_HOST_USER = None
+EMAIL_HOST_PASSWORD = None
+
+# For production with PythonAnywhere paid account, comment above and uncomment below:
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # EMAIL_HOST = 'smtp.gmail.com'
 # EMAIL_PORT = 587
