@@ -306,7 +306,7 @@ def generate_track(request, midi_id):
         midi_file=midi_file,
         title=f"Nueva canción basada en {midi_file.stem.song.title}_{midi_file.stem.get_stem_type_display()}",
         model_temperature=1.0,  # Valor por defecto
-        add_drums=False  # Sin batería por defecto
+        add_drums=True  # Con batería por defecto
     )
     
     try:
