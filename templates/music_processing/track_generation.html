@@ -409,6 +409,8 @@
 <script>
 // Inicializar sistema de auto-refresh para tareas en progreso
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 Track generation page loaded');
+    
     // Auto-refresh para tareas en progreso
     const processingElements = document.querySelectorAll('.status-processing');
     
@@ -419,13 +421,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 30000);
     }
     
-    // Agregar event listeners a todos los formularios de generación
-    document.querySelectorAll('form[action*="generate_track"]').forEach(function(form) {
-        form.addEventListener('submit', function(e) {
+    // Usar event delegation en el document para capturar clics en botones de generar
+    document.addEventListener('click', function(e) {
+        // Verificar si el elemento clickeado es un botón de generar track
+        if (e.target && e.target.matches('button[type="submit"]') && 
+            e.target.closest('form[action*="generate_track"]')) {
+            
+            console.log('🔧 Generate track button clicked');
             e.preventDefault();
+            
+            const button = e.target;
+            const form = button.closest('form');
+            
+            console.log('🔧 Form found:', !!form);
             
             // Obtener información del MIDI desde el card
             const midiCard = form.closest('.midi-card');
+            console.log('🔧 MIDI card found:', !!midiCard);
+            
+            if (!midiCard) {
+                console.error('❌ No se encontró el MIDI card');
+                // Fallback: enviar formulario normalmente
+                form.submit();
+                return;
+            }
+            
             const songTitleElement = midiCard.querySelector('p strong');
             const stemTypeElement = midiCard.querySelector('h6');
             
@@ -435,20 +455,32 @@ document.addEventListener('DOMContentLoaded', function() {
             const trackTitle = `Nueva canción basada en ${songTitle}`;
             const midiSource = `${songTitle} - ${stemType}`;
             
+            console.log('🔧 Track info:', { trackTitle, midiSource });
+            
             // Confirmar antes de proceder
-            if (!confirm('¿Estás seguro de que quieres generar esta canción? El proceso puede tardar hasta 15 minutos.')) {
+            const confirmed = confirm('¿Estás seguro de que quieres generar esta canción? El proceso puede tardar hasta 15 minutos.');
+            console.log('🔧 User confirmed:', confirmed);
+            
+            if (!confirmed) {
                 return;
             }
             
             // Mostrar overlay de procesamiento
-            showTrackProcessing(trackTitle, midiSource);
+            console.log('🔧 Showing processing overlay...');
+            if (typeof window.processingOverlay !== 'undefined') {
+                showTrackProcessing(trackTitle, midiSource);
+            } else {
+                console.warn('⚠️ processingOverlay not available');
+            }
             
             // Enviar formulario después de un pequeño delay para que se vea el overlay
             setTimeout(() => {
+                console.log('🔧 Submitting form...');
                 form.submit();
             }, 500);
-        });
+        }
     });
+});
 });
 
 // Función específica para mostrar procesamiento de generación de tracks (llamada desde base.html)
