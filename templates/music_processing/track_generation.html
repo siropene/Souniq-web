@@ -539,7 +539,95 @@ document.querySelectorAll('[data-bs-target="#generateModal"]').forEach(function(
         // Actualizar la acción del formulario
         const form = document.getElementById('generateForm');
         form.action = '{% url "music_processing:generate_track" 0 %}'.replace('0', midiId);
+        
+        // Resetear el estado del botón por si quedó en estado "Generando..."
+        const generateBtn = document.getElementById('generateBtn');
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Generar Track';
     });
+});
+
+// Event listener para resetear modal cuando se abre
+document.getElementById('generateModal').addEventListener('show.bs.modal', function(event) {
+    console.log('🔍 DEBUG: Modal abriendo...');
+    
+    // Resetear estado del formulario y botón
+    const generateBtn = document.getElementById('generateBtn');
+    const form = document.getElementById('generateForm');
+    
+    // Asegurar que el botón esté habilitado y con el texto correcto
+    generateBtn.disabled = false;
+    generateBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Generar Track';
+    
+    // Resetear validaciones del formulario
+    form.classList.remove('was-validated');
+    
+    // Asegurar que todos los elementos del modal están visibles
+    const modalBody = this.querySelector('.modal-body');
+    if (modalBody) {
+        modalBody.style.display = '';
+        modalBody.style.visibility = '';
+    }
+    
+    // DEBUG COMPLETO: verificar que los mensajes de alerta están presentes
+    const alertInfo = this.querySelector('.alert-info');
+    const alertWarning = this.querySelector('.alert-warning');
+    const allAlerts = this.querySelectorAll('.alert');
+    
+    console.log('🔍 Modal generateModal abierto y reseteado');
+    console.log('🔍 Total alertas encontradas:', allAlerts.length);
+    console.log('🔍 Alert info presente:', !!alertInfo);
+    console.log('🔍 Alert warning presente:', !!alertWarning);
+    
+    if (alertInfo) {
+        console.log('🔍 Alert info visible:', getComputedStyle(alertInfo).display !== 'none');
+        console.log('🔍 Alert info contenido:', alertInfo.textContent.substring(0, 100) + '...');
+        console.log('🔍 Alert info HTML:', alertInfo.innerHTML.substring(0, 200) + '...');
+    } else {
+        console.log('❌ Alert info NO ENCONTRADA - buscando en todo el documento...');
+        const globalAlertInfo = document.querySelector('.alert-info');
+        console.log('🔍 Alert info global:', !!globalAlertInfo);
+    }
+    
+    if (alertWarning) {
+        console.log('🔍 Alert warning visible:', getComputedStyle(alertWarning).display !== 'none');
+        console.log('🔍 Alert warning contenido:', alertWarning.textContent.substring(0, 100) + '...');
+    } else {
+        console.log('❌ Alert warning NO ENCONTRADA');
+    }
+    
+    // Verificar si el modal-body tiene contenido
+    console.log('🔍 Modal body HTML length:', modalBody ? modalBody.innerHTML.length : 'NO MODAL BODY');
+    
+    // Verificar clases CSS que podrían estar ocultando elementos
+    if (allAlerts.length > 0) {
+        allAlerts.forEach((alert, index) => {
+            const styles = getComputedStyle(alert);
+            console.log(`🔍 Alert ${index} - display: ${styles.display}, visibility: ${styles.visibility}, opacity: ${styles.opacity}`);
+        });
+    }
+});
+
+// Event listener para limpiar estado cuando el modal se cierra
+document.getElementById('generateModal').addEventListener('hidden.bs.modal', function(event) {
+    // Resetear completamente el formulario
+    const form = document.getElementById('generateForm');
+    const generateBtn = document.getElementById('generateBtn');
+    
+    // Resetear botón
+    generateBtn.disabled = false;
+    generateBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Generar Track';
+    
+    // Limpiar campos del formulario
+    const titleField = document.getElementById('{{ form.title.id_for_label }}');
+    if (titleField) {
+        titleField.value = '';
+    }
+    
+    // Resetear validaciones
+    form.classList.remove('was-validated');
+    
+    console.log('Modal generateModal cerrado y limpiado');
 });
 
 // Manejo del formulario de generación con overlay
