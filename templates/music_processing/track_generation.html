@@ -425,25 +425,38 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) {
         console.log('🔧 Click detected on:', e.target.tagName, e.target.className);
         
-        // Verificar si el elemento clickeado es un botón de generar track
-        if (e.target && (
-            (e.target.matches('button[type="submit"]') && e.target.closest('form[action*="generate_track"]')) ||
-            (e.target.matches('i.fa-magic') && e.target.closest('button[type="submit"]') && e.target.closest('form[action*="generate_track"]'))
-        )) {
+        // Debug más específico
+        if (e.target && e.target.tagName === 'BUTTON') {
+            console.log('🔧 Button clicked, type:', e.target.type);
+            console.log('🔧 Button text:', e.target.textContent.trim());
+            
+            const form = e.target.closest('form');
+            if (form) {
+                console.log('🔧 Form action:', form.action);
+                console.log('🔧 Form action contains generate_track:', form.action.includes('generate_track'));
+            }
+        }
+        
+        // Verificar si es un botón dentro de un formulario de generar track
+        if (e.target && e.target.tagName === 'BUTTON' && 
+            e.target.type === 'submit' && 
+            e.target.textContent.includes('Generar Track')) {
             
             console.log('🔧 Generate track button clicked');
             e.preventDefault();
             e.stopPropagation();
             
-            // Obtener el botón y formulario correcto
-            let button = e.target;
-            if (e.target.tagName === 'I') {
-                button = e.target.closest('button');
-            }
+            const button = e.target;
             const form = button.closest('form');
             
             console.log('🔧 Button found:', !!button);
             console.log('🔧 Form found:', !!form);
+            
+            // Verificar que es el formulario correcto
+            if (!form || !form.action.includes('generate_track')) {
+                console.log('🔧 Not the correct form, allowing default behavior');
+                return;
+            }
             
             // Obtener información del MIDI desde el card
             const midiCard = form.closest('.midi-card');
