@@ -183,7 +183,7 @@ def generate_new_track_sync(generated_track_id):
         generated_track = GeneratedTrack.objects.get(id=generated_track_id)
         
         # Crear cliente de Hugging Face
-        client = Client("Giant-Music-Transformer")
+        client = Client("Orpheus-Music-Transformer")
         
         # Crear archivo temporal
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mid') as temp_file:
@@ -192,30 +192,48 @@ def generate_new_track_sync(generated_track_id):
             temp_file_path = temp_file.name
 
         try:
-            # Llamar a la API
+            # Llamar a la API con los parámetros correctos de Orpheus
             result = client.predict(
-                midi_file=handle_file(temp_file_path),
-                outro_type=generated_track.outro_type,
-                start_sequence=generated_track.start_sequence,
-                continue_sequence=generated_track.continue_sequence,
-                temperature=generated_track.temperature,
+                input_midi=handle_file(temp_file_path),
+                apply_sustains=True,
+                remove_duplicate_pitches=True,
+                remove_overlapping_durations=True,
+                prime_instruments=[],  # Sin instrumentos prime por defecto
+                num_prime_tokens=6656,
+                num_gen_tokens=512,
+                model_temperature=generated_track.temperature if hasattr(generated_track, 'temperature') else 0.9,
+                model_top_p=0.96,
+                add_drums=False,
+                add_outro=hasattr(generated_track, 'outro_type') and generated_track.outro_type != 'none',
                 api_name="/predict"
             )
             
-            # Procesar resultado - debería ser un archivo MIDI generado
-            if result and os.path.exists(result):
-                with open(result, 'rb') as f:
-                    generated_content = f.read()
+            # La API devuelve 20 elementos: [audio0, plot0, audio1, plot1, ..., audio9, plot9]
+            # Solo usamos los 8 primeros audios como solicitas (índices 0, 2, 4, 6, 8, 10, 12, 14)
+            if result and len(result) >= 16:  # Al menos 8 audios disponibles
+                audio_files = []
+                for i in range(0, 16, 2):  # Índices 0, 2, 4, 6, 8, 10, 12, 14
+                    if i < len(result) and result[i] and os.path.exists(result[i]):
+                        audio_files.append(result[i])
                 
-                filename = f"{generated_track.title}_generated.mid"
-                generated_track.generated_file.save(filename, ContentFile(generated_content))
-                generated_track.status = 'completed'
-                generated_track.completed_at = timezone.now()
-                generated_track.save()
-                
-                return {'status': 'success', 'generated_track': generated_track.generated_file.url}
+                if audio_files:
+                    # Usar el primer audio generado como resultado principal
+                    first_audio_path = audio_files[0]
+                    with open(first_audio_path, 'rb') as f:
+                        generated_content = f.read()
+                    
+                    filename = f"{generated_track.title}_generated.wav"
+                    generated_track.generated_file.save(filename, ContentFile(generated_content))
+                    generated_track.status = 'completed'
+                    generated_track.completed_at = timezone.now()
+                    generated_track.save()
+                    
+                    logger.info(f"✅ Nueva canción generada exitosamente. {len(audio_files)} variaciones disponibles")
+                    return {'status': 'success', 'generated_track': generated_track.generated_file.url, 'total_variations': len(audio_files)}
+                else:
+                    raise Exception("No se encontraron archivos de audio válidos en el resultado")
             else:
-                raise Exception("No se pudo generar la nueva canción")
+                raise Exception("No se pudo generar la nueva canción - resultado insuficiente")
                 
         finally:
             # Limpiar archivo temporal
@@ -223,8 +241,12 @@ def generate_new_track_sync(generated_track_id):
                 os.unlink(temp_file_path)
 
     except Exception as e:
-        logger.error(f"Error generando nueva canción: {str(e)}")
-        generated_track.status = 'error'
-        generated_track.error_message = str(e)
-        generated_track.save()
+        logger.error(f"❌ Error generando nueva canción: {str(e)}")
+        try:
+            generated_track = GeneratedTrack.objects.get(id=generated_track_id)
+            generated_track.status = 'error'
+            generated_track.error_message = str(e)
+            generated_track.save()
+        except Exception as save_error:
+            logger.error(f"❌ Error adicional al guardar estado: {save_error}")
         raise
