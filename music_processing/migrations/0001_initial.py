@@ -176,7 +176,7 @@ class Migration(migrations.Migration):
                             ("other", "Otros"),
                             ("vocals", "Voces"),
                             ("guitar", "Guitarra"),
-                            ("strings", "Cuerdas"),
+                            ("Clean", "Instrumental"),
                         ],
                         max_length=20,
                     ),
