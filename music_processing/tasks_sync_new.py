@@ -177,40 +177,28 @@ def convert_stem_to_midi_sync(stem_id):
         raise
 
 
-def generate_new_track_sync(midi_file_id, title, outro_type, start_sequence, continue_sequence, temperature):
+def generate_new_track_sync(generated_track_id):
     """Generar nueva canción de forma síncrona"""
     try:
-        midi_file = MidiFile.objects.get(id=midi_file_id)
+        generated_track = GeneratedTrack.objects.get(id=generated_track_id)
         
-        # Crear GeneratedTrack
-        generated_track = GeneratedTrack.objects.create(
-            user=midi_file.stem.song.user,
-            midi_file=midi_file,
-            title=title,
-            outro_type=outro_type,
-            start_sequence=start_sequence,
-            continue_sequence=continue_sequence,
-            temperature=temperature,
-            status='processing'
-        )
-
         # Crear cliente de Hugging Face
         client = Client("Giant-Music-Transformer")
         
         # Crear archivo temporal
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mid') as temp_file:
-            midi_file.file.seek(0)
-            temp_file.write(midi_file.file.read())
+            generated_track.midi_file.file.seek(0)
+            temp_file.write(generated_track.midi_file.file.read())
             temp_file_path = temp_file.name
 
         try:
             # Llamar a la API
             result = client.predict(
                 midi_file=handle_file(temp_file_path),
-                outro_type=outro_type,
-                start_sequence=start_sequence,
-                continue_sequence=continue_sequence,
-                temperature=temperature,
+                outro_type=generated_track.outro_type,
+                start_sequence=generated_track.start_sequence,
+                continue_sequence=generated_track.continue_sequence,
+                temperature=generated_track.temperature,
                 api_name="/predict"
             )
             
@@ -219,13 +207,13 @@ def generate_new_track_sync(midi_file_id, title, outro_type, start_sequence, con
                 with open(result, 'rb') as f:
                     generated_content = f.read()
                 
-                filename = f"{title}_generated.mid"
-                generated_track.file.save(filename, ContentFile(generated_content))
+                filename = f"{generated_track.title}_generated.mid"
+                generated_track.generated_file.save(filename, ContentFile(generated_content))
                 generated_track.status = 'completed'
                 generated_track.completed_at = timezone.now()
                 generated_track.save()
                 
-                return {'status': 'success', 'generated_track': generated_track.file.url}
+                return {'status': 'success', 'generated_track': generated_track.generated_file.url}
             else:
                 raise Exception("No se pudo generar la nueva canción")
                 
