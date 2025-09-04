@@ -43,7 +43,7 @@ class Stem(models.Model):
         ('other', 'Otros'),
         ('vocals', 'Voces'),
         ('guitar', 'Guitarra'),
-        ('strings', 'Cuerdas'),
+        ('Clean', 'Instrumental'),
     ]
     
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='stems')
