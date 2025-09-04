@@ -30,54 +30,54 @@ show_disk_usage
 echo ""
 echo "🚀 Iniciando limpieza..."
 
-# 1. Limpiar archivos de medios generados (más antiguos de 7 días)
+# 1. Limpiar archivos de medios generados
 echo ""
-echo "1️⃣ Limpiando archivos de medios generados antiguos (>7 días)..."
+echo "1️⃣ Limpiando archivos de medios generados..."
 
 # Stems generados
 if [ -d "media/stems/" ]; then
-    OLD_STEMS=$(find media/stems/ -name "*.wav" -o -name "*.mp3" -mtime +7 2>/dev/null | wc -l)
+    OLD_STEMS=$(find media/stems/ -name "*.wav" -o -name "*.mp3" 2>/dev/null | wc -l)
     if [ $OLD_STEMS -gt 0 ]; then
-        echo "   🗑️ Eliminando $OLD_STEMS stems antiguos..."
-        find media/stems/ -name "*.wav" -o -name "*.mp3" -mtime +7 -delete 2>/dev/null
+        echo "   🗑️ Eliminando $OLD_STEMS stems..."
+        find media/stems/ -name "*.wav" -o -name "*.mp3" -delete 2>/dev/null
     else
-        echo "   ✅ No hay stems antiguos para eliminar"
+        echo "   ✅ No hay stems para eliminar"
     fi
 fi
 
 # Tracks generados
 if [ -d "media/generated_tracks/" ]; then
-    OLD_TRACKS=$(find media/generated_tracks/ -name "*.mid" -o -name "*.wav" -o -name "*.mp3" -mtime +7 2>/dev/null | wc -l)
+    OLD_TRACKS=$(find media/generated_tracks/ -name "*.mid" -o -name "*.wav" -o -name "*.mp3" 2>/dev/null | wc -l)
     if [ $OLD_TRACKS -gt 0 ]; then
-        echo "   🗑️ Eliminando $OLD_TRACKS tracks antiguos..."
-        find media/generated_tracks/ -name "*.mid" -o -name "*.wav" -o -name "*.mp3" -mtime +7 -delete 2>/dev/null
+        echo "   🗑️ Eliminando $OLD_TRACKS tracks..."
+        find media/generated_tracks/ -name "*.mid" -o -name "*.wav" -o -name "*.mp3" -delete 2>/dev/null
     else
-        echo "   ✅ No hay tracks antiguos para eliminar"
+        echo "   ✅ No hay tracks para eliminar"
     fi
 fi
 
 # Archivos MIDI
 if [ -d "media/midi/" ]; then
-    OLD_MIDI=$(find media/midi/ -name "*.mid" -mtime +7 2>/dev/null | wc -l)
+    OLD_MIDI=$(find media/midi/ -name "*.mid" 2>/dev/null | wc -l)
     if [ $OLD_MIDI -gt 0 ]; then
-        echo "   🗑️ Eliminando $OLD_MIDI archivos MIDI antiguos..."
-        find media/midi/ -name "*.mid" -mtime +7 -delete 2>/dev/null
+        echo "   🗑️ Eliminando $OLD_MIDI archivos MIDI..."
+        find media/midi/ -name "*.mid" -delete 2>/dev/null
     else
-        echo "   ✅ No hay archivos MIDI antiguos para eliminar"
+        echo "   ✅ No hay archivos MIDI para eliminar"
     fi
 fi
 
-# 2. Limpiar archivos subidos por usuarios (más antiguos de 14 días)
+# 2. Limpiar archivos subidos por usuarios
 echo ""
-echo "2️⃣ Limpiando archivos subidos por usuarios antiguos (>14 días)..."
+echo "2️⃣ Limpiando archivos subidos por usuarios..."
 
 if [ -d "media/songs/" ]; then
-    OLD_SONGS=$(find media/songs/ -type f -mtime +14 2>/dev/null | wc -l)
+    OLD_SONGS=$(find media/songs/ -type f 2>/dev/null | wc -l)
     if [ $OLD_SONGS -gt 0 ]; then
-        echo "   🗑️ Eliminando $OLD_SONGS canciones antiguas..."
-        find media/songs/ -type f -mtime +14 -delete 2>/dev/null
+        echo "   🗑️ Eliminando $OLD_SONGS canciones..."
+        find media/songs/ -type f -delete 2>/dev/null
     else
-        echo "   ✅ No hay canciones antiguas para eliminar"
+        echo "   ✅ No hay canciones para eliminar"
     fi
 fi
 
