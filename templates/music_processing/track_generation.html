@@ -554,19 +554,42 @@ document.getElementById('generateForm').addEventListener('submit', function(e) {
         return;
     }
     
-    // Mostrar overlay de generación de tracks
-    showTrackProcessing(trackTitle, midiTitle);
+    // Deshabilitar botón para evitar envíos duplicados
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generando...';
     
-    // Cerrar modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('generateModal'));
-    if (modal) {
-        modal.hide();
+    // Intentar mostrar overlay (si está disponible)
+    try {
+        if (typeof processingOverlay !== 'undefined') {
+            showTrackProcessing(trackTitle, midiTitle);
+        }
+    } catch (error) {
+        console.warn('ProcessingOverlay no disponible:', error);
     }
     
-    // Enviar formulario después de mostrar el overlay
+    // Cerrar modal
+    try {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('generateModal'));
+        if (modal) {
+            modal.hide();
+        }
+    } catch (error) {
+        console.warn('Error cerrando modal:', error);
+    }
+    
+    // Enviar formulario de forma robusta
+    const form = this;
     setTimeout(() => {
-        this.submit();
-    }, 1000);
+        try {
+            form.submit();
+        } catch (error) {
+            console.error('Error enviando formulario:', error);
+            // Re-habilitar botón si hay error
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-magic me-2"></i>Generar Track';
+            alert('Error al enviar la solicitud. Por favor, inténtalo de nuevo.');
+        }
+    }, 500); // Reducido de 1000ms a 500ms
 });
 
 // Función específica para mostrar procesamiento de generación de tracks
@@ -600,7 +623,7 @@ function showTrackProcessing(trackTitle, midiSource) {
             
             // Actualizar mensaje de progreso
             if (progress < 15) {
-                processingOverlay.setStatus('Cargando modelo Giant-Music-Transformer...');
+                processingOverlay.setStatus('Cargando modelo Orpheus-Music-Transformer...');
             } else if (progress < 30) {
                 processingOverlay.setStatus('Analizando MIDI de entrada...');
             } else if (progress < 50) {
