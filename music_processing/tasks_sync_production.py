@@ -86,9 +86,9 @@ def process_song_to_stems_sync(song_id):
                 
                 if result and len(result) >= 7:
                     # Tipos de stems según la API: vocals, drums, bass, guitar, piano, other, instrumental
-                    # Mapear instrumental a strings para que coincida con el modelo
+                    # Mapear instrumental a Clean para que coincida con el modelo
                     api_stem_types = ['vocals', 'drums', 'bass', 'guitar', 'piano', 'other', 'instrumental']
-                    model_stem_types = ['vocals', 'drums', 'bass', 'guitar', 'piano', 'other', 'strings']
+                    model_stem_types = ['vocals', 'drums', 'bass', 'guitar', 'piano', 'other', 'Clean']
                     logger.info(f"🎼 Procesando {len(result[:7])} stems...")
                     
                     for i, stem_file in enumerate(result[:7]):

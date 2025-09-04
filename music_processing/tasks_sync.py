@@ -2,8 +2,6 @@
 import os
 import tempfile
 import logging
-import json
-import time
 from django.core.files.base import ContentFile
 from django.utils import timezone
 from gradio_client import Client, handle_file
@@ -27,41 +25,10 @@ def process_song_to_stems_sync(song_id):
             song.save()
             logger.info("📊 Estado actualizado a 'processing_stems'")
 
-            # Crear cliente de Hugging Face con patch para evitar JSONDecodeError
+            # Crear cliente de Hugging Face
             logger.info("🔗 Conectando con SouniQ/Modulo1...")
-            
-            # Patch temporal: interceptar el método problemático
-            original_get_api_info = None
-            try:
-                # Guardar método original
-                original_get_api_info = Client._get_api_info
-                
-                # Función de reemplazo
-                def patched_get_api_info(self):
-                    try:
-                        return original_get_api_info(self)
-                    except json.JSONDecodeError:
-                        logger.warning("⚠️ JSONDecodeError en _get_api_info - usando estructura mínima")
-                        # Estructura mínima para permitir creación del cliente
-                        return {
-                            'named_endpoints': {},
-                            'unnamed_endpoints': {}
-                        }
-                
-                # Aplicar patch
-                Client._get_api_info = patched_get_api_info
-                
-                # Crear cliente con patch activo
-                client = Client("SouniQ/Modulo1")
-                logger.info("✅ Cliente creado con patch exitoso")
-                
-            except Exception as e:
-                logger.error(f"❌ Error incluso con patch: {e}")
-                raise
-            finally:
-                # Restaurar método original
-                if original_get_api_info:
-                    Client._get_api_info = original_get_api_info
+            client = Client("SouniQ/Modulo1")
+            logger.info("✅ Cliente conectado exitosamente")
             
             # Crear archivo temporal
             logger.info("📂 Creando archivo temporal...")
@@ -75,503 +42,201 @@ def process_song_to_stems_sync(song_id):
                 logger.info(f"💾 Archivo temporal creado: {temp_file_path}")
 
             try:
-                # Llamar a la API con endpoint específico
+                # Llamar a la API
                 logger.info("🚀 Enviando archivo a la API de Hugging Face...")
-                logger.info("⏱️ Esto puede tardar 2-3 minutos, por favor espera...")
                 result = client.predict(
-                    handle_file(temp_file_path),
+                    input_wav_path=handle_file(temp_file_path),
                     api_name="/predict"
                 )
-                logger.info(f"📥 Resultado recibido: {type(result)}")
+                logger.info(f"📥 Resultado recibido: {type(result)}, longitud: {len(result) if result else 'None'}")
                 
-                if result:
-                    logger.info(f"📊 Longitud del resultado: {len(result) if hasattr(result, '__len__') else 'No tiene longitud'}")
-                    if hasattr(result, '__len__') and len(result) > 0:
-                        for i, item in enumerate(result[:3]):  # Solo primeros 3 para no saturar logs
-                            logger.info(f"   Item {i}: {type(item)} - {str(item)[:100] if item else 'None'}")
-                else:
-                    logger.warning("⚠️ Resultado es None o vacío")
-                
-                if result and hasattr(result, '__len__') and len(result) >= 7:
+                if result and len(result) >= 7:
                     # Tipos de stems según la API: vocals, drums, bass, guitar, piano, other, instrumental
-                    # Mapear instrumental a strings para que coincida con el modelo
+                    # Mapear instrumental a Clean para que coincida con el modelo
                     api_stem_types = ['vocals', 'drums', 'bass', 'guitar', 'piano', 'other', 'instrumental']
-                    model_stem_types = ['vocals', 'drums', 'bass', 'guitar', 'piano', 'other', 'strings']
+                    model_stem_types = ['vocals', 'drums', 'bass', 'guitar', 'piano', 'other', 'Clean']
                     logger.info(f"🎼 Procesando {len(result[:7])} stems...")
                     
-                    for i, stem_file in enumerate(result[:7]):
-                        if stem_file:
-                            # Mapear tipo de stem
-                            api_type = api_stem_types[i] if i < len(api_stem_types) else f'stem_{i}'
-                            model_type = model_stem_types[i] if i < len(model_stem_types) else api_type
-                            
-                            # Crear o obtener stem en base de datos con order correcto
-                            stem, created = Stem.objects.get_or_create(
-                                song=song,
-                                order=i,  # Usar order como parte de la búsqueda
-                                defaults={
-                                    'stem_type': model_type,
-                                }
-                            )
-                            
-                            if created:
-                                logger.info(f"📝 Nuevo stem {model_type} creado (order={i})")
+                    stems_created = 0
+                    for i, stem_file_path in enumerate(result[:7]):
+                        try:
+                            if os.path.exists(stem_file_path) and i < len(model_stem_types):
+                                stem_type = model_stem_types[i]  # Usar el tipo del modelo
+                                logger.info(f"🎹 Procesando stem {i+1}/{len(model_stem_types)}: {stem_type}")
+                                logger.info(f"📁 Archivo del stem: {stem_file_path}")
+                                
+                                # Crear objeto Stem
+                                stem = Stem.objects.create(
+                                    song=song,
+                                    stem_type=stem_type,
+                                    order=i
+                                )
+                                logger.info(f"✨ Modelo Stem creado: ID {stem.id}")
+                                
+                                # Guardar archivo
+                                with open(stem_file_path, 'rb') as f:
+                                    stem_content = f.read()
+                                
+                                filename = f"{song.title}_{stem_type}.wav"
+                                stem.file.save(filename, ContentFile(stem_content))
+                                stem.save()
+                                stems_created += 1
+                                logger.info(f"💾 Stem {stem_type} guardado exitosamente")
                             else:
-                                logger.info(f"♻️ Stem {model_type} ya existe (order={i}), actualizando archivo...")
-                            
-                            # Guardar archivo (siempre, para actualizar si es necesario)
-                            filename = f"stem_{model_type}_{song.id}_{stem.id}.wav"
-                            with open(stem_file, 'rb') as f:
-                                stem.file.save(filename, ContentFile(f.read()))
-                            
-                            logger.info(f"✅ Stem {model_type} guardado: {filename}")
-                    
+                                logger.warning(f"⚠️ Archivo de stem no encontrado o índice fuera de rango: {i}, archivo: {stem_file_path if i < len(result) else 'N/A'}")
+                        except Exception as stem_error:
+                            logger.error(f"❌ Error procesando stem {i}: {stem_error}", exc_info=True)
+                            continue
+
                     song.status = 'stems_completed'
                     song.save()
-                    logger.info("🎉 Stems procesados exitosamente")
+                    logger.info(f"🎉 Procesamiento completado. {stems_created} stems creados exitosamente")
                     
-                    return {
-                        'status': 'success',
-                        'message': f'Se procesaron {len(result)} stems exitosamente',
-                        'stems_created': len(result)
-                    }
+                    # Verificar que los stems se guardaron
+                    final_stem_count = song.stems.count()
+                    logger.info(f"🔍 Verificación final: {final_stem_count} stems en la DB")
                     
+                    return {'status': 'success', 'stems_created': stems_created}
                 else:
-                    logger.error("❌ No se recibieron suficientes stems de la API")
-                    song.status = 'error'
-                    song.save()
-                    
-                    return {
-                        'status': 'error',
-                        'message': 'No se recibieron suficientes stems de la API',
-                        'stems_created': 0
-                    }
-                    
-            except Exception as e:
-                # Verificar si es un AppError específico de Gradio
-                error_message = str(e)
-                if "upstream Gradio app has raised an exception" in error_message:
-                    logger.error("❌ Error de la API de Hugging Face: El archivo no pudo ser procesado")
-                    logger.error("💡 Posibles causas: archivo muy corto, formato incorrecto, o problema temporal de la API")
-                else:
-                    logger.error(f"❌ Error en predict(): {e}")
-                
-                import traceback
-                logger.error(f"📋 Traceback predict: {traceback.format_exc()}")
-                song.status = 'error'
-                song.save()
-                
-                return {
-                    'status': 'error',
-                    'message': f'Error en la API: {error_message}',
-                    'stems_created': 0
-                }
-                
+                    raise Exception("No se pudieron generar los stems - resultado vacío o insuficiente")
+
             finally:
                 # Limpiar archivo temporal
                 if os.path.exists(temp_file_path):
                     os.unlink(temp_file_path)
-                    logger.info("🧹 Archivo temporal eliminado")
-                    
+                    logger.info("🧹 Archivo temporal limpiado")
+
     except Exception as e:
-        logger.error(f"❌ Error general en process_song_to_stems_sync: {e}")
-        import traceback
-        logger.error(f"📋 Traceback completo: {traceback.format_exc()}")
+        logger.error(f"❌ Error procesando canción {song_id}: {str(e)}", exc_info=True)
         try:
+            song = Song.objects.get(id=song_id)
             song.status = 'error'
             song.save()
-        except:
-            logger.error("❌ Error adicional al guardar estado")
-        
-        return {
-            'status': 'error',
-            'message': f'Error general: {str(e)}',
-            'stems_created': 0
-        }
+            logger.info("📊 Estado de la canción actualizado a 'error'")
+        except Exception as save_error:
+            logger.error(f"❌ Error adicional al guardar estado: {save_error}")
+        raise
+
 
 def convert_stem_to_midi_sync(stem_id):
     """Convertir stem a MIDI de forma síncrona"""
     try:
-        logger.info(f"🎼 Iniciando conversión MIDI para stem ID: {stem_id}")
-        
         stem = Stem.objects.get(id=stem_id)
-        logger.info(f"📁 Stem encontrado: {stem.stem_type} de '{stem.song.title}'")
-        logger.info(f"📄 Archivo del stem: {stem.file.name}")
         
         # Crear o obtener MidiFile
         midi_file, created = MidiFile.objects.get_or_create(
             stem=stem,
             defaults={'status': 'processing'}
         )
-        logger.info(f"🎵 MidiFile {'creado' if created else 'actualizado'}: ID {midi_file.id}")
         
         if not created:
             midi_file.status = 'processing'
             midi_file.save()
 
-        # Crear cliente de Hugging Face con patch para evitar JSONDecodeError
-        logger.info("🔗 Conectando con SouniQ/Modulo2...")
-        
-        # Patch temporal: interceptar el método problemático
-        original_get_api_info = None
-        try:
-            # Guardar método original
-            original_get_api_info = Client._get_api_info
-            
-            # Función de reemplazo simple
-            def patched_get_api_info(self):
-                try:
-                    return original_get_api_info(self)
-                except json.JSONDecodeError:
-                    logger.warning("⚠️ JSONDecodeError en _get_api_info - usando estructura mínima")
-                    # Estructura mínima que permite crear el cliente
-                    return {
-                        'named_endpoints': {},
-                        'unnamed_endpoints': {}
-                    }
-            
-            # Aplicar patch
-            Client._get_api_info = patched_get_api_info
-            
-            # Crear cliente con patch activo
-            client = Client("SouniQ/Modulo2")
-            logger.info("✅ Cliente creado con patch exitoso")
-            
-        except Exception as e:
-            logger.error(f"❌ Error incluso con patch: {e}")
-            raise
-        finally:
-            # Restaurar método original
-            if original_get_api_info:
-                Client._get_api_info = original_get_api_info
+        # Crear cliente de Hugging Face
+        client = Client("SouniQ/Modulo2")
         
         # Crear archivo temporal
-        logger.info("📂 Creando archivo temporal...")
         with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
             stem.file.seek(0)
-            content = stem.file.read()
-            logger.info(f"📏 Tamaño del archivo: {len(content)} bytes")
-            temp_file.write(content)
+            temp_file.write(stem.file.read())
             temp_file_path = temp_file.name
-            logger.info(f"💾 Archivo temporal creado: {temp_file_path}")
 
         try:
-            # Llamar a la API con endpoint específico
-            logger.info("🚀 Enviando archivo a la API de conversión MIDI...")
+            # Llamar a la API
             result = client.predict(
-                handle_file(temp_file_path),
+                input_audio=handle_file(temp_file_path),
                 api_name="/predict"
             )
-            logger.info(f"📥 Resultado MIDI recibido: {type(result)}")
             
-            if result:
-                # Guardar archivo MIDI
-                filename = f"midi_{stem.stem_type}_{stem.song.id}_{midi_file.id}.mid"
+            # El resultado debería ser la ruta del archivo MIDI
+            if result and os.path.exists(result):
                 with open(result, 'rb') as f:
-                    midi_file.file.save(filename, ContentFile(f.read()))
+                    midi_content = f.read()
                 
+                filename = f"{stem.song.title}_{stem.get_stem_type_display()}.mid"
+                midi_file.file.save(filename, ContentFile(midi_content))
                 midi_file.status = 'completed'
+                midi_file.completed_at = timezone.now()
                 midi_file.save()
-                logger.info(f"✅ MIDI guardado: {filename}")
                 
-                # Actualizar estado de la canción si todos los stems tienen MIDI
-                if stem.song.stems.filter(midi_file__status='completed').count() >= stem.song.stems.count():
-                    stem.song.status = 'completed'
-                    stem.song.save()
-                    logger.info("🎉 Conversión completa - todos los stems convertidos")
-                
-                return {
-                    'status': 'success',
-                    'message': f'MIDI generado exitosamente para {stem.stem_type}',
-                    'midi_file_id': midi_file.id
-                }
-                
+                return {'status': 'success', 'midi_file': midi_file.file.url}
             else:
-                logger.error("❌ No se recibió archivo MIDI de la API")
-                midi_file.status = 'error'
-                midi_file.save()
+                raise Exception("No se pudo generar el archivo MIDI")
                 
-                return {
-                    'status': 'error',
-                    'message': 'No se recibió archivo MIDI de la API'
-                }
-                
-        except Exception as e:
-            logger.error(f"❌ Error en predict(): {e}")
-            midi_file.status = 'error'
-            midi_file.save()
-            return {
-                'status': 'error',
-                'message': f'Error en la API: {str(e)}'
-            }
-            
         finally:
             # Limpiar archivo temporal
             if os.path.exists(temp_file_path):
                 os.unlink(temp_file_path)
-                logger.info("🧹 Archivo temporal eliminado")
-                
+
     except Exception as e:
-        logger.error(f"❌ Error general en convert_stem_to_midi_sync: {e}")
-        try:
-            midi_file.status = 'error'
-            midi_file.save()
-        except:
-            logger.error("❌ Error adicional al guardar estado del MIDI")
-        
-        return {
-            'status': 'error',
-            'message': f'Error general: {str(e)}'
-        }
+        logger.error(f"Error convirtiendo stem {stem_id} a MIDI: {str(e)}")
+        midi_file.status = 'error'
+        midi_file.error_message = str(e)
+        midi_file.save()
+        raise
 
-def generate_new_track_sync(generated_track_id):
-    """Generar nueva canción de forma síncrona con 8 versiones"""
-    import logging
-    logger = logging.getLogger(__name__)
-    
+
+def generate_new_track_sync(midi_file_id, title, outro_type, start_sequence, continue_sequence, temperature):
+    """Generar nueva canción de forma síncrona"""
     try:
-        from .models import GeneratedTrack, GeneratedVersion
+        midi_file = MidiFile.objects.get(id=midi_file_id)
         
-        generated_track = GeneratedTrack.objects.get(id=generated_track_id)
-        logger.info(f"🎵 Iniciando generación de track ID: {generated_track_id}")
-        logger.info(f"📝 Título: {generated_track.title}")
-        
-        generated_track.status = 'processing'
-        generated_track.save()
+        # Crear GeneratedTrack
+        generated_track = GeneratedTrack.objects.create(
+            user=midi_file.stem.song.user,
+            midi_file=midi_file,
+            title=title,
+            outro_type=outro_type,
+            start_sequence=start_sequence,
+            continue_sequence=continue_sequence,
+            temperature=temperature,
+            status='processing'
+        )
 
-        # Crear cliente de Hugging Face con patch para evitar JSONDecodeError
-        logger.info(f"🔗 Conectando con Orpheus-Music-Transformer...")
+        # Crear cliente de Hugging Face
+        client = Client("Giant-Music-Transformer")
         
-        # Patch temporal: interceptar el método problemático
-        original_get_api_info = None
-        try:
-            # Guardar método original
-            original_get_api_info = Client._get_api_info
-            
-            # Función de reemplazo simple
-            def patched_get_api_info(self):
-                try:
-                    return original_get_api_info(self)
-                except json.JSONDecodeError:
-                    logger.warning("⚠️ JSONDecodeError en _get_api_info - usando estructura mínima")
-                    # Estructura mínima que permite crear el cliente
-                    return {
-                        'named_endpoints': {},
-                        'unnamed_endpoints': {}
-                    }
-            
-            # Aplicar patch
-            Client._get_api_info = patched_get_api_info
-            
-            # Crear cliente con patch activo
-            client = Client("asigalov61/Orpheus-Music-Transformer")
-            logger.info(f"✅ Cliente creado con patch exitoso")
-            
-        except Exception as e:
-            logger.error(f"❌ Error incluso con patch: {e}")
-            raise
-        finally:
-            # Restaurar método original
-            if original_get_api_info:
-                Client._get_api_info = original_get_api_info
-        
-        # Crear archivo temporal y validar MIDI
+        # Crear archivo temporal
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mid') as temp_file:
-            generated_track.midi_file.file.seek(0)
-            midi_content = generated_track.midi_file.file.read()
-            temp_file.write(midi_content)
+            midi_file.file.seek(0)
+            temp_file.write(midi_file.file.read())
             temp_file_path = temp_file.name
-        
-        logger.info(f"📂 Archivo temporal creado: {temp_file_path}")
-        logger.info(f"📏 Tamaño del archivo MIDI: {len(midi_content)} bytes")
-        logger.info(f"📁 Archivo MIDI origen: {generated_track.midi_file.file.name}")
-        
-        # Validar archivo MIDI
-        if len(midi_content) < 100:
-            logger.error(f"❌ Archivo MIDI muy pequeño: {len(midi_content)} bytes")
-            return {
-                'status': 'error',
-                'message': f'Archivo MIDI muy pequeño ({len(midi_content)} bytes). Debe tener al menos 100 bytes.'
-            }
-        
-        # Verificar header MIDI
-        if not midi_content.startswith(b'MThd'):
-            logger.error("❌ Header MIDI inválido")
-            return {
-                'status': 'error',
-                'message': 'Archivo MIDI no tiene header válido (debe comenzar con MThd)'
-            }
-        
-        logger.info("✅ Archivo MIDI validado correctamente")
 
         try:
-            # Llamar a la API con reintentos automáticos
-            logger.info("🚀 Enviando MIDI a la API de generación...")
-            logger.info(f"⚙️ Parámetros: add_outro={generated_track.add_outro}, temp={generated_track.model_temperature}")
+            # Llamar a la API
+            result = client.predict(
+                midi_file=handle_file(temp_file_path),
+                outro_type=outro_type,
+                start_sequence=start_sequence,
+                continue_sequence=continue_sequence,
+                temperature=temperature,
+                api_name="/predict"
+            )
             
-            # Implementar reintentos para errores temporales
-            max_retries = 3
-            retry_delay = 30  # segundos
-            
-            for attempt in range(max_retries):
-                try:
-                    if attempt > 0:
-                        logger.info(f"🔄 Intento {attempt + 1}/{max_retries} después de esperar {retry_delay}s...")
-                        import time
-                        time.sleep(retry_delay)
-                    
-                    result = client.predict(
-                        input_midi=handle_file(temp_file_path),
-                        apply_sustains=generated_track.apply_sustains,
-                        remove_duplicate_pitches=generated_track.remove_duplicate_pitches,
-                        remove_overlapping_durations=generated_track.remove_overlapping_durations,
-                        prime_instruments=generated_track.prime_instruments,
-                        num_prime_tokens=generated_track.num_prime_tokens,
-                        num_gen_tokens=generated_track.num_gen_tokens,
-                        model_temperature=generated_track.model_temperature,
-                        model_top_p=generated_track.model_top_p,
-                        add_drums=generated_track.add_drums,
-                        add_outro=generated_track.add_outro,
-                        api_name="/generate_music_and_state"
-                    )
-                    
-                    # Si llegamos aquí, la API funcionó
-                    logger.info(f"✅ API respondió exitosamente en intento {attempt + 1}")
-                    break
-                    
-                except Exception as e:
-                    error_msg = str(e).lower()
-                    
-                    # Solo reintentar para errores temporales
-                    if ("upstream gradio app has raised an exception" in error_msg or 
-                        "timeout" in error_msg or 
-                        "connection" in error_msg):
-                        
-                        if attempt < max_retries - 1:
-                            logger.warning(f"⚠️ Error temporal en intento {attempt + 1}: {str(e)[:100]}...")
-                            logger.info(f"🔄 Reintentando en {retry_delay} segundos...")
-                            continue
-                        else:
-                            logger.error(f"❌ Error persistente después de {max_retries} intentos")
-                            raise
-                    else:
-                        # Error no temporal, no reintentar
-                        logger.error(f"❌ Error no temporal: {str(e)[:100]}...")
-                        raise
-            
-            if result and len(result) >= 8:
-                logger.info(f"🎼 Procesando resultado con {len(result)} elementos...")
-                logger.info(f"📊 Tipo de resultado: {type(result)}")
-                logger.info(f"🔍 Primeros elementos: {[type(item) for item in result[:3]]}")
+            # Procesar resultado - debería ser un archivo MIDI generado
+            if result and os.path.exists(result):
+                with open(result, 'rb') as f:
+                    generated_content = f.read()
                 
-                # Procesar hasta 8 versiones
-                versions_saved = 0
-                for i, track_item in enumerate(result[:8]):
-                    if track_item:
-                        logger.info(f"🎵 Procesando versión {i+1}: {type(track_item)}")
-                        
-                        # La API puede devolver diferentes formatos
-                        track_file_path = None
-                        
-                        if isinstance(track_item, str):
-                            # Es una ruta directa
-                            track_file_path = track_item
-                        elif isinstance(track_item, dict):
-                            # Es un diccionario, extraer la ruta
-                            track_file_path = track_item.get('name') or track_item.get('path') or track_item.get('file')
-                            logger.info(f"🗂️ Diccionario keys: {list(track_item.keys()) if track_item else 'None'}")
-                        elif hasattr(track_item, 'name'):
-                            # Tiene atributo name
-                            track_file_path = track_item.name
-                        
-                        if track_file_path and os.path.exists(track_file_path):
-                            try:
-                                version = GeneratedVersion.objects.create(
-                                    track=generated_track,
-                                    version_number=i + 1
-                                )
-                                
-                                filename = f"generated_v{i+1}_{generated_track.id}_{version.id}.mid"
-                                with open(track_file_path, 'rb') as f:
-                                    version.file.save(filename, ContentFile(f.read()))
-                                
-                                logger.info(f"✅ Versión {i+1} guardada: {filename}")
-                                versions_saved += 1
-                            except Exception as e:
-                                logger.error(f"❌ Error guardando versión {i+1}: {e}")
-                        else:
-                            logger.warning(f"⚠️ No se pudo obtener archivo válido para versión {i+1}: {track_file_path}")
-                
-                if versions_saved > 0:
-                    generated_track.status = 'completed'
-                    generated_track.save()
-                    logger.info(f"🎉 Generación completada: {versions_saved} versiones guardadas")
-                    
-                    return {
-                        'status': 'success',
-                        'message': f'Se generaron {versions_saved} versiones exitosamente',
-                        'versions_created': versions_saved
-                    }
-                else:
-                    logger.error("❌ No se pudieron guardar versiones")
-                    generated_track.status = 'error'
-                    generated_track.save()
-                    
-                    return {
-                        'status': 'error',
-                        'message': 'No se pudieron procesar los archivos de la API',
-                        'versions_created': 0
-                    }
-                
-            else:
-                logger.error("❌ No se recibieron suficientes versiones de la API")
-                generated_track.status = 'error'
+                filename = f"{title}_generated.mid"
+                generated_track.file.save(filename, ContentFile(generated_content))
+                generated_track.status = 'completed'
+                generated_track.completed_at = timezone.now()
                 generated_track.save()
                 
-                return {
-                    'status': 'error',
-                    'message': 'No se recibieron suficientes versiones de la API',
-                    'versions_created': 0
-                }
-                
-        except Exception as e:
-            error_message = str(e)
-            
-            # Manejo específico para errores de la API Orpheus-Music-Transformer
-            if "upstream Gradio app has raised an exception" in error_message:
-                logger.error("❌ Error de la API Orpheus-Music-Transformer: El archivo MIDI no pudo ser procesado")
-                logger.error("💡 Posibles causas:")
-                logger.error("   - Archivo MIDI corrupto o formato incorrecto")
-                logger.error("   - MIDI demasiado corto o sin datos musicales válidos")
-                logger.error("   - Problema temporal en la API de Hugging Face")
-                error_msg = "El archivo MIDI no pudo ser procesado por la API de generación"
+                return {'status': 'success', 'generated_track': generated_track.file.url}
             else:
-                logger.error(f"❌ Error en predict(): {e}")
-                error_msg = f"Error en la API: {str(e)}"
-            
-            generated_track.status = 'error'
-            generated_track.save()
-            
-            return {
-                'status': 'error',
-                'message': error_msg,
-                'versions_created': 0
-            }
-            
+                raise Exception("No se pudo generar la nueva canción")
+                
         finally:
+            # Limpiar archivo temporal
             if os.path.exists(temp_file_path):
                 os.unlink(temp_file_path)
-                
+
     except Exception as e:
-        logger.error(f"❌ Error general en generate_new_track_sync: {e}")
-        try:
-            generated_track.status = 'error'
-            generated_track.save()
-        except:
-            logger.error("❌ Error adicional al guardar estado")
-        
-        return {
-            'status': 'error',
-            'message': f'Error general: {str(e)}',
-            'versions_created': 0
-        }
+        logger.error(f"Error generando nueva canción: {str(e)}")
+        generated_track.status = 'error'
+        generated_track.error_message = str(e)
+        generated_track.save()
+        raise
