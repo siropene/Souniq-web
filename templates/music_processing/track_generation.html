@@ -433,7 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const form = e.target.closest('form');
             if (form) {
                 console.log('🔧 Form action:', form.action);
-                console.log('🔧 Form action contains generate_track:', form.action.includes('generate_track'));
+                console.log('🔧 Form action contains generate/track:', form.action.includes('generate/track'));
             }
         }
         
@@ -453,7 +453,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('🔧 Form found:', !!form);
             
             // Verificar que es el formulario correcto
-            if (!form || !form.action.includes('generate_track')) {
+            if (!form || !form.action.includes('generate/track')) {
                 console.log('🔧 Not the correct form, allowing default behavior');
                 return;
             }
