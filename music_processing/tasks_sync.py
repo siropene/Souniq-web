@@ -205,7 +205,7 @@ def generate_new_track_sync(generated_track_id):
                 model_top_p=0.96,
                 add_drums=False,
                 add_outro=hasattr(generated_track, 'outro_type') and generated_track.outro_type != 'none',
-                api_name="/predict"
+                api_name="/generate_music_and_state"
             )
             
             # La API devuelve 20 elementos: [audio0, plot0, audio1, plot1, ..., audio9, plot9]
