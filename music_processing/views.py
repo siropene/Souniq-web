@@ -300,29 +300,27 @@ def generate_track(request, midi_id):
         status='completed'
     )
     
-    form = TrackGenerationForm(request.POST)
+    # Crear track con valores por defecto
+    generated_track = GeneratedTrack.objects.create(
+        user=request.user,
+        midi_file=midi_file,
+        title=f"Nueva canción basada en {midi_file.stem.song.title}_{midi_file.stem.get_stem_type_display()}",
+        model_temperature=1.0,  # Valor por defecto
+        add_drums=False  # Sin batería por defecto
+    )
     
-    if form.is_valid():
-        generated_track = form.save(commit=False)
-        generated_track.user = request.user
-        generated_track.midi_file = midi_file
-        generated_track.save()
+    try:
+        # Procesar de forma síncrona
+        messages.info(request, f'Generando la canción "{generated_track.title}". Por favor espere...')
+        result = generate_new_track_sync(generated_track.id)
         
-        try:
-            # Procesar de forma síncrona
-            messages.info(request, f'Generando la canción "{generated_track.title}". Por favor espere...')
-            result = generate_new_track_sync(generated_track.id)
+        if result['status'] == 'success':
+            messages.success(request, f'Se ha generado exitosamente la canción "{generated_track.title}".')
+        else:
+            messages.error(request, f'Error al generar la canción "{generated_track.title}".')
             
-            if result['status'] == 'success':
-                messages.success(request, f'Se ha generado exitosamente la canción "{generated_track.title}".')
-            else:
-                messages.error(request, f'Error al generar la canción "{generated_track.title}".')
-                
-        except Exception as e:
-            messages.error(request, f'Error al generar la canción: {str(e)}')
-        
-    else:
-        messages.error(request, 'Hubo un error en los parámetros de generación.')
+    except Exception as e:
+        messages.error(request, f'Error al generar la canción: {str(e)}')
     
     return redirect('music_processing:track_generation')
 
