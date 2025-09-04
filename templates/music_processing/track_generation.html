@@ -576,35 +576,50 @@ document.getElementById('generateModal').addEventListener('show.bs.modal', funct
     
     console.log('🔍 Modal generateModal abierto y reseteado');
     console.log('🔍 Total alertas encontradas:', allAlerts.length);
-    console.log('🔍 Alert info presente:', !!alertInfo);
-    console.log('🔍 Alert warning presente:', !!alertWarning);
     
-    if (alertInfo) {
-        console.log('🔍 Alert info visible:', getComputedStyle(alertInfo).display !== 'none');
-        console.log('🔍 Alert info contenido:', alertInfo.textContent.substring(0, 100) + '...');
-        console.log('🔍 Alert info HTML:', alertInfo.innerHTML.substring(0, 200) + '...');
-    } else {
-        console.log('❌ Alert info NO ENCONTRADA - buscando en todo el documento...');
-        const globalAlertInfo = document.querySelector('.alert-info');
-        console.log('🔍 Alert info global:', !!globalAlertInfo);
-    }
+    // Verificar cada alerta específicamente por contenido
+    let midiAlert = null;
+    let configAlert = null;
+    let importantAlert = null;
     
-    if (alertWarning) {
-        console.log('🔍 Alert warning visible:', getComputedStyle(alertWarning).display !== 'none');
-        console.log('🔍 Alert warning contenido:', alertWarning.textContent.substring(0, 100) + '...');
-    } else {
-        console.log('❌ Alert warning NO ENCONTRADA');
-    }
+    allAlerts.forEach((alert, index) => {
+        const text = alert.textContent;
+        const styles = getComputedStyle(alert);
+        
+        console.log(`🔍 Alert ${index}:`);
+        console.log(`   - Display: ${styles.display}, Visibility: ${styles.visibility}, Opacity: ${styles.opacity}`);
+        console.log(`   - Contenido: "${text.substring(0, 50).trim()}..."`);
+        
+        if (text.includes('MIDI seleccionado')) {
+            midiAlert = alert;
+            console.log(`   ✅ Es la alerta de MIDI seleccionado`);
+        } else if (text.includes('Configuración optimizada')) {
+            configAlert = alert;
+            console.log(`   ✅ Es la alerta de Configuración optimizada`);
+        } else if (text.includes('Importante') && text.includes('generación puede tardar')) {
+            importantAlert = alert;
+            console.log(`   ✅ Es la alerta de Importante`);
+        } else {
+            console.log(`   ❓ Alerta desconocida`);
+        }
+    });
     
-    // Verificar si el modal-body tiene contenido
-    console.log('🔍 Modal body HTML length:', modalBody ? modalBody.innerHTML.length : 'NO MODAL BODY');
+    console.log('📋 RESUMEN:');
+    console.log('   - Alerta MIDI:', !!midiAlert ? '✅ Presente' : '❌ Ausente');
+    console.log('   - Alerta Config:', !!configAlert ? '✅ Presente' : '❌ Ausente');
+    console.log('   - Alerta Important:', !!importantAlert ? '✅ Presente' : '❌ Ausente');
     
-    // Verificar clases CSS que podrían estar ocultando elementos
-    if (allAlerts.length > 0) {
-        allAlerts.forEach((alert, index) => {
-            const styles = getComputedStyle(alert);
-            console.log(`🔍 Alert ${index} - display: ${styles.display}, visibility: ${styles.visibility}, opacity: ${styles.opacity}`);
-        });
+    // Si falta la alerta de configuración, intentar encontrarla en el DOM completo
+    if (!configAlert) {
+        console.log('❌ PROBLEMA: Falta la alerta de Configuración optimizada');
+        const globalConfigAlert = document.querySelector('*:not(script):not(style)');
+        const bodyText = document.body.textContent;
+        const hasConfigText = bodyText.includes('Configuración optimizada');
+        console.log('🔍 Texto "Configuración optimizada" existe en la página:', hasConfigText);
+        
+        if (hasConfigText) {
+            console.log('🔍 El texto existe pero no está en el modal - posible problema de DOM');
+        }
     }
 });
 
