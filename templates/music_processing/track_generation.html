@@ -527,23 +527,60 @@ document.querySelectorAll('[data-bs-target="#generateModal"]').forEach(function(
         const midiId = this.dataset.midiId;
         const midiTitle = this.dataset.midiTitle;
         
-        document.getElementById('selectedMidiId').value = midiId;
-        document.getElementById('selectedMidiTitle').textContent = midiTitle;
+        // Verificar que los elementos existen antes de usarlos
+        const selectedMidiIdInput = document.getElementById('selectedMidiId');
+        const selectedMidiTitleSpan = document.getElementById('selectedMidiTitle');
+        const titleField = document.getElementById('{{ form.title.id_for_label }}');
+        const form = document.getElementById('generateForm');
+        
+        console.log('🔧 Configurando modal con MIDI:', midiId, midiTitle);
+        console.log('🔧 Elementos encontrados:', {
+            selectedMidiId: !!selectedMidiIdInput,
+            selectedMidiTitle: !!selectedMidiTitleSpan,
+            titleField: !!titleField,
+            form: !!form
+        });
+        
+        // Solo asignar si los elementos existen
+        if (selectedMidiIdInput) {
+            selectedMidiIdInput.value = midiId;
+        } else {
+            console.error('❌ selectedMidiId input no encontrado');
+        }
+        
+        if (selectedMidiTitleSpan) {
+            selectedMidiTitleSpan.textContent = midiTitle;
+        } else {
+            console.error('❌ selectedMidiTitle span no encontrado');
+        }
         
         // Auto-rellenar título basado en el MIDI
-        const titleField = document.getElementById('{{ form.title.id_for_label }}');
-        if (!titleField.value) {
+        if (titleField && !titleField.value) {
             titleField.value = 'Nueva canción basada en ' + midiTitle;
         }
         
         // Actualizar la acción del formulario
-        const form = document.getElementById('generateForm');
-        form.action = '{% url "music_processing:generate_track" 0 %}'.replace('0', midiId);
+        if (form) {
+            form.action = '{% url "music_processing:generate_track" 0 %}'.replace('0', midiId);
+        } else {
+            console.error('❌ generateForm no encontrado');
+        }
         
         // Resetear el estado del botón por si quedó en estado "Generando..."
         const generateBtn = document.getElementById('generateBtn');
-        generateBtn.disabled = false;
-        generateBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Generar Track';
+        if (generateBtn) {
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Generar Track';
+        }
+        
+        // Si el modal está vacío, intentar restaurar el contenido
+        const modal = document.getElementById('generateModal');
+        const modalBody = modal ? modal.querySelector('.modal-body') : null;
+        
+        if (modalBody && modalBody.children.length === 0) {
+            console.error('❌ Modal body está vacío - intentando restaurar...');
+            location.reload(); // Solución drástica pero efectiva
+        }
     });
 });
 
@@ -650,16 +687,29 @@ document.getElementById('generateForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const button = document.getElementById('generateBtn');
-    const midiTitle = document.getElementById('selectedMidiTitle').textContent;
-    const trackTitle = document.getElementById('{{ form.title.id_for_label }}').value || 'Nueva canción';
+    const selectedMidiTitleSpan = document.getElementById('selectedMidiTitle');
+    const titleField = document.getElementById('{{ form.title.id_for_label }}');
+    
+    // Verificación defensiva
+    if (!selectedMidiTitleSpan) {
+        console.error('❌ Modal corrupto - selectedMidiTitle no existe');
+        alert('Error: El modal no está funcionando correctamente. La página se recargará.');
+        location.reload();
+        return;
+    }
+    
+    const midiTitle = selectedMidiTitleSpan.textContent;
+    const trackTitle = titleField ? titleField.value || 'Nueva canción' : 'Nueva canción';
     
     if (!confirm('¿Estás seguro de que quieres generar esta canción? El proceso puede tardar hasta 15 minutos.')) {
         return;
     }
     
     // Deshabilitar botón para evitar envíos duplicados
-    button.disabled = true;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generando...';
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generando...';
+    }
     
     // Intentar mostrar overlay (si está disponible)
     try {
@@ -688,8 +738,10 @@ document.getElementById('generateForm').addEventListener('submit', function(e) {
         } catch (error) {
             console.error('Error enviando formulario:', error);
             // Re-habilitar botón si hay error
-            button.disabled = false;
-            button.innerHTML = '<i class="fas fa-magic me-2"></i>Generar Track';
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-magic me-2"></i>Generar Track';
+            }
             alert('Error al enviar la solicitud. Por favor, inténtalo de nuevo.');
         }
     }, 500); // Reducido de 1000ms a 500ms
