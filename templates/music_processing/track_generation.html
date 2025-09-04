@@ -588,102 +588,131 @@ document.querySelectorAll('[data-bs-target="#generateModal"]').forEach(function(
 document.getElementById('generateModal').addEventListener('show.bs.modal', function(event) {
     console.log('🔍 DEBUG: Modal abriendo...');
     
-    // Resetear estado del formulario y botón
-    const generateBtn = document.getElementById('generateBtn');
-    const form = document.getElementById('generateForm');
-    
-    // Asegurar que el botón esté habilitado y con el texto correcto
-    generateBtn.disabled = false;
-    generateBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Generar Track';
-    
-    // Resetear validaciones del formulario
-    form.classList.remove('was-validated');
-    
-    // Asegurar que todos los elementos del modal están visibles
+    // Verificar si el modal está corrupto ANTES de hacer anything
     const modalBody = this.querySelector('.modal-body');
-    if (modalBody) {
-        modalBody.style.display = '';
-        modalBody.style.visibility = '';
-    }
-    
-    // DEBUG COMPLETO: verificar que los mensajes de alerta están presentes
-    const alertInfo = this.querySelector('.alert-info');
-    const alertWarning = this.querySelector('.alert-warning');
     const allAlerts = this.querySelectorAll('.alert');
     
-    console.log('🔍 Modal generateModal abierto y reseteado');
+    console.log('🔍 Modal body presente:', !!modalBody);
     console.log('🔍 Total alertas encontradas:', allAlerts.length);
     
-    // Verificar cada alerta específicamente por contenido
-    let midiAlert = null;
-    let configAlert = null;
-    let importantAlert = null;
-    
-    allAlerts.forEach((alert, index) => {
-        const text = alert.textContent;
-        const styles = getComputedStyle(alert);
+    // Si el modal está vacío o corrupto, restaurar el contenido
+    if (!modalBody || allAlerts.length === 0) {
+        console.log('❌ Modal corrupto detectado - restaurando contenido...');
         
-        console.log(`🔍 Alert ${index}:`);
-        console.log(`   - Display: ${styles.display}, Visibility: ${styles.visibility}, Opacity: ${styles.opacity}`);
-        console.log(`   - Contenido: "${text.substring(0, 50).trim()}..."`);
-        
-        if (text.includes('MIDI seleccionado')) {
-            midiAlert = alert;
-            console.log(`   ✅ Es la alerta de MIDI seleccionado`);
-        } else if (text.includes('Configuración optimizada')) {
-            configAlert = alert;
-            console.log(`   ✅ Es la alerta de Configuración optimizada`);
-        } else if (text.includes('Importante') && text.includes('generación puede tardar')) {
-            importantAlert = alert;
-            console.log(`   ✅ Es la alerta de Importante`);
-        } else {
-            console.log(`   ❓ Alerta desconocida`);
-        }
-    });
-    
-    console.log('📋 RESUMEN:');
-    console.log('   - Alerta MIDI:', !!midiAlert ? '✅ Presente' : '❌ Ausente');
-    console.log('   - Alerta Config:', !!configAlert ? '✅ Presente' : '❌ Ausente');
-    console.log('   - Alerta Important:', !!importantAlert ? '✅ Presente' : '❌ Ausente');
-    
-    // Si falta la alerta de configuración, intentar encontrarla en el DOM completo
-    if (!configAlert) {
-        console.log('❌ PROBLEMA: Falta la alerta de Configuración optimizada');
-        const globalConfigAlert = document.querySelector('*:not(script):not(style)');
-        const bodyText = document.body.textContent;
-        const hasConfigText = bodyText.includes('Configuración optimizada');
-        console.log('🔍 Texto "Configuración optimizada" existe en la página:', hasConfigText);
-        
-        if (hasConfigText) {
-            console.log('🔍 El texto existe pero no está en el modal - posible problema de DOM');
+        // Recrear el contenido del modal-body
+        const modalContent = this.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.innerHTML = `
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-magic me-2"></i>Generar Nueva Canción
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <form method="post" id="generateForm">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <input type="hidden" name="midi_id" id="selectedMidiId">
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>MIDI seleccionado:</strong> <span id="selectedMidiTitle"></span>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
+                                    {{ form.title }}
+                                    {% if form.title.help_text %}<div class="form-text">{{ form.title.help_text }}</div>{% endif %}
+                                    {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors.0 }}</div>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.model_temperature.id_for_label }}" class="form-label">{{ form.model_temperature.label }}</label>
+                                    {{ form.model_temperature }}
+                                    {% if form.model_temperature.help_text %}<div class="form-text">{{ form.model_temperature.help_text }}</div>{% endif %}
+                                    {% if form.model_temperature.errors %}<div class="text-danger small">{{ form.model_temperature.errors.0 }}</div>{% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mt-4">
+                                    {{ form.add_drums }}
+                                    <label class="form-check-label" for="{{ form.add_drums.id_for_label }}">
+                                        {{ form.add_drums.label }}
+                                    </label>
+                                    {% if form.add_drums.help_text %}<div class="form-text">{{ form.add_drums.help_text }}</div>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Configuración optimizada:</strong> Orpheus-Music-Transformer usa configuraciones avanzadas automáticamente para la mejor calidad musical. Solo necesitas ajustar la creatividad y decidir si incluir batería.
+                        </div>
+                        
+                        <div class="alert alert-warning mt-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Importante:</strong> La generación puede tardar entre 5-15 minutos. El archivo se descargará automáticamente cuando esté listo.
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="generateBtn">
+                            <i class="fas fa-magic me-2"></i>Generar Track
+                        </button>
+                    </div>
+                </form>
+            `;
+            
+            console.log('✅ Contenido del modal restaurado');
+            
+            // Re-vincular el event listener del formulario
+            setTimeout(() => {
+                const newForm = document.getElementById('generateForm');
+                if (newForm && !newForm.hasAttribute('data-listener-added')) {
+                    newForm.setAttribute('data-listener-added', 'true');
+                    bindFormSubmitListener();
+                }
+            }, 100);
         }
     }
-});
-
-// Event listener para limpiar estado cuando el modal se cierra
-document.getElementById('generateModal').addEventListener('hidden.bs.modal', function(event) {
-    // Resetear completamente el formulario
-    const form = document.getElementById('generateForm');
+    
+    // Continuar con el reseteo normal
     const generateBtn = document.getElementById('generateBtn');
+    const form = document.getElementById('generateForm');
     
-    // Resetear botón
-    generateBtn.disabled = false;
-    generateBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Generar Track';
-    
-    // Limpiar campos del formulario
-    const titleField = document.getElementById('{{ form.title.id_for_label }}');
-    if (titleField) {
-        titleField.value = '';
+    if (generateBtn) {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Generar Track';
     }
     
-    // Resetear validaciones
-    form.classList.remove('was-validated');
+    if (form) {
+        form.classList.remove('was-validated');
+    }
     
-    console.log('Modal generateModal cerrado y limpiado');
+    console.log('✅ Modal reseteado y listo');
 });
 
-// Manejo del formulario de generación con overlay
-document.getElementById('generateForm').addEventListener('submit', function(e) {
+// Función para vincular el listener del formulario (reutilizable)
+function bindFormSubmitListener() {
+    const form = document.getElementById('generateForm');
+    if (!form) return;
+    
+    // Remover listener previo si existe
+    form.removeEventListener('submit', handleFormSubmit);
+    // Añadir nuevo listener
+    form.addEventListener('submit', handleFormSubmit);
+}
+
+// Handler del submit del formulario (separado para reutilización)
+function handleFormSubmit(e) {
     e.preventDefault();
     
     const button = document.getElementById('generateBtn');
@@ -744,8 +773,42 @@ document.getElementById('generateForm').addEventListener('submit', function(e) {
             }
             alert('Error al enviar la solicitud. Por favor, inténtalo de nuevo.');
         }
-    }, 500); // Reducido de 1000ms a 500ms
+    }, 500);
+}
+
+// Vincular el listener inicialmente
+document.addEventListener('DOMContentLoaded', function() {
+    bindFormSubmitListener();
 });
+
+// Event listener para limpiar estado cuando el modal se cierra
+document.getElementById('generateModal').addEventListener('hidden.bs.modal', function(event) {
+    // Resetear completamente el formulario
+    const form = document.getElementById('generateForm');
+    const generateBtn = document.getElementById('generateBtn');
+    
+    // Resetear botón
+    generateBtn.disabled = false;
+    generateBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Generar Track';
+    
+    // Limpiar campos del formulario
+    const titleField = document.getElementById('{{ form.title.id_for_label }}');
+    if (titleField) {
+        titleField.value = '';
+    }
+    
+    // Resetear validaciones
+    form.classList.remove('was-validated');
+    
+    console.log('Modal generateModal cerrado y limpiado');
+});
+
+// ANTIGUO: Manejo del formulario - REEMPLAZADO por handleFormSubmit()
+/*
+document.getElementById('generateForm').addEventListener('submit', function(e) {
+    // Código movido a handleFormSubmit() function
+});
+*/
 
 // Función específica para mostrar procesamiento de generación de tracks
 function showTrackProcessing(trackTitle, midiSource) {
