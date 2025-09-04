@@ -183,7 +183,7 @@ def generate_new_track_sync(generated_track_id):
         generated_track = GeneratedTrack.objects.get(id=generated_track_id)
         
         # Crear cliente de Hugging Face
-        client = Client("Orpheus-Music-Transformer")
+        client = Client("asigalov61/Orpheus-Music-Transformer")
         
         # Crear archivo temporal
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mid') as temp_file:
