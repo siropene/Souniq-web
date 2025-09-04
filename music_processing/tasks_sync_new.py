@@ -145,7 +145,7 @@ def convert_stem_to_midi_sync(stem_id):
         try:
             # Llamar a la API
             result = client.predict(
-                input_audio=handle_file(temp_file_path),
+                input_wav_path=handle_file(temp_file_path),
                 api_name="/predict"
             )
             
