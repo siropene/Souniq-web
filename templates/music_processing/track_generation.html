@@ -60,8 +60,7 @@
                                 </a>
                                 <form method="post" action="{% url 'music_processing:generate_track' midi_file.id %}" style="display: inline;">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-success" 
-                                            onclick="return confirm('¿Generar nueva canción? El proceso puede tardar 5-15 minutos.')">
+                                    <button type="submit" class="btn btn-sm btn-success">
                                         <i class="fas fa-magic me-1"></i>Generar Track
                                     </button>
                                 </form>
@@ -419,6 +418,37 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.reload();
         }, 30000);
     }
+    
+    // Agregar event listeners a todos los formularios de generación
+    document.querySelectorAll('form[action*="generate_track"]').forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Obtener información del MIDI desde el card
+            const midiCard = form.closest('.midi-card');
+            const songTitleElement = midiCard.querySelector('p strong');
+            const stemTypeElement = midiCard.querySelector('h6');
+            
+            const songTitle = songTitleElement ? songTitleElement.textContent.trim() : 'Canción';
+            const stemType = stemTypeElement ? stemTypeElement.textContent.replace('🎵', '').trim() : 'Stem';
+            
+            const trackTitle = `Nueva canción basada en ${songTitle}`;
+            const midiSource = `${songTitle} - ${stemType}`;
+            
+            // Confirmar antes de proceder
+            if (!confirm('¿Estás seguro de que quieres generar esta canción? El proceso puede tardar hasta 15 minutos.')) {
+                return;
+            }
+            
+            // Mostrar overlay de procesamiento
+            showTrackProcessing(trackTitle, midiSource);
+            
+            // Enviar formulario después de un pequeño delay para que se vea el overlay
+            setTimeout(() => {
+                form.submit();
+            }, 500);
+        });
+    });
 });
 
 // Función específica para mostrar procesamiento de generación de tracks (llamada desde base.html)
